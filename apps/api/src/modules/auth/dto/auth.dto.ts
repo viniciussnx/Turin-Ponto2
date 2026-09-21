@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DevicePlatform } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -8,6 +9,7 @@ import {
   IsString,
   Length,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
 
 export class LoginUserDto {
@@ -68,7 +70,12 @@ export class LoginEmployeeDto {
   @Length(6, 128)
   password: string;
 
+  // ValidateNested + Type sao obrigatorios aqui: o ValidationPipe roda com
+  // whitelist e forbidNonWhitelisted, entao um campo sem decorator do
+  // class-validator nao e apenas ignorado — e recusado com 400.
   @ApiProperty({ type: DeviceInfoDto })
+  @ValidateNested()
+  @Type(() => DeviceInfoDto)
   device: DeviceInfoDto;
 
   @ApiPropertyOptional({
