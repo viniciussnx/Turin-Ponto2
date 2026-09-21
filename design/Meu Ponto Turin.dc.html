@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#0BAF29; --brand-ink:#08871f; --brand-soft:rgba(11,175,41,.10); --brand-line:rgba(11,175,41,.28);
+    --bg:#F1F4F1; --surface:#FFFFFF; --surface2:#F7F9F7; --line:#E2E8E3; --line2:#EDF1ED;
+    --text:#0F1F17; --text2:#3A4E44; --muted:#788B80;
+    --ok:#0BAF29; --warn:#D98A00; --bad:#D64545; --info:#2C6BD6;
+    --bezel:#DCE3DD; --shadow:rgba(9,38,24,.30); --deep:#07130D;
+    --canvas:#E9EDEA; --canvas-ink:#0F1F17; --canvas-muted:#6E8078;
+  }
+  [data-theme="escuro"]{
+    --bg:#0A1310; --surface:#111E18; --surface2:#16241D; --line:#22342B; --line2:#1B2A22;
+    --text:#EAF3EE; --text2:#BACBC1; --muted:#849A90;
+    --brand-soft:rgba(11,175,41,.16); --brand-line:rgba(11,175,41,.40);
+    --bezel:#1E2C25; --shadow:rgba(0,0,0,.55); --deep:#050C08;
+    --canvas:#0D1712; --canvas-ink:#EAF3EE; --canvas-muted:#7F958B;
+  }
+  body{margin:0;background:var(--canvas);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{color:var(--brand-ink)}
+  *{box-sizing:border-box}
+  @keyframes tpulse{0%{transform:scale(1);opacity:.55}70%{transform:scale(1.45);opacity:0}100%{transform:scale(1.45);opacity:0}}
+  @keyframes tdash{to{stroke-dashoffset:0}}
+  @keyframes tfade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes tsheen{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.6 12 3.2l9 7.4V21h-6.2v-6.1H9.2V21H3z"/></symbol>
+<symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.6 2.1"/></symbol>
+<symbol id="ic-mirror" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 5.6h16.8v14.8H3.6zM3.6 9.8h16.8M8 3v4.4M16 3v4.4M8.6 14.6l2.2 2.2 4.4-4.4"/></symbol>
+<symbol id="ic-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 13.4h5l1.2 2.2h4.8l1.2-2.2h5M3.4 13.4 6.4 4.6h11.2l3 8.8v6H3.4z"/></symbol>
+<symbol id="ic-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.4c1.4-3.6 4-5.4 7.2-5.4s5.8 1.8 7.2 5.4"/></symbol>
+<symbol id="ic-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16.2v-4.8a6 6 0 0 0-12 0v4.8l-2 2h16zM10 20.2a2 2 0 0 0 4 0"/></symbol>
+<symbol id="ic-chev-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 4.8 7.6 12l7.2 7.2"/></symbol>
+<symbol id="ic-chev-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.2 4.8 16.4 12l-7.2 7.2"/></symbol>
+<symbol id="ic-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.2s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/><circle cx="12" cy="9.8" r="2.6"/></symbol>
+<symbol id="ic-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 8h3.2l1.6-2.2h7.2L17.2 8h3.2v11.4H3.6z"/><circle cx="12" cy="13.6" r="3.2"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 12.6 9.4 17.6 19.8 6.8"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 2.8 20.2h18.4zM12 9.4v4.6M12 17.2h.02"/></symbol>
+<symbol id="ic-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 4.6h15.2v11.2H4.4zM4.4 9.4h15.2M7.4 15.8v2.6M16.6 15.8v2.6M8 12.8h.02M16 12.8h.02"/></symbol>
+<symbol id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 14.4A8.4 8.4 0 1 1 9.6 3.8a7.2 7.2 0 0 0 10.6 10.6z"/></symbol>
+<symbol id="ic-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 4h5.2v16h-5.2M10.8 8.2 6.6 12.4l4.2 4.2M6.6 12.4h9.2"/></symbol>
+<symbol id="ic-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 3.2h7.6l4 4v13.6H6.2zM13.8 3.2v4h4M9.2 13h5.6M9.2 16.6h5.6"/></symbol>
+<symbol id="ic-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 7.6h12.4v4.2a5 5 0 0 1-5 5h-2.4a5 5 0 0 1-5-5zM16.2 8.6h1.8a2.1 2.1 0 0 1 0 4.8h-1.8M3 20.6h14"/></symbol>
+<symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l7 2.9v6c0 4.6-3 7.7-7 9.1-4-1.4-7-4.5-7-9.1v-6zM9 12.2l2.2 2.2 4-4"/></symbol>
+<symbol id="ic-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.6h16M7 12h10M10 17.4h4"/></symbol>
+<symbol id="ic-face" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 3.6H3.6v5M15.4 3.6h5v5M8.6 20.4H3.6v-5M15.4 20.4h5v-5M9.4 10h.02M14.6 10h.02M9.6 14.6c1.4 1.2 3.4 1.2 4.8 0"/></symbol>
+<symbol id="ic-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 8.4h14.4l-3.4-3.4M20.2 15.6H5.8l3.4 3.4"/></symbol>
+<symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 10.4h12.8v9.8H5.6zM8.6 10.4V7.8a3.4 3.4 0 0 1 6.8 0v2.6M12 14v2.6"/></symbol>
+<symbol id="ic-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 12S6 6.4 12 6.4 21.4 12 21.4 12 18 17.6 12 17.6 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+<symbol id="ic-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.8h16v14.4H4zM4 10h16M8.4 3.2v4.4M15.6 3.2v4.4"/></symbol>
+<symbol id="ic-chev-d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 9.2 12 16.4l7.2-7.2"/></symbol>
+<symbol id="ic-chev-u" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 14.8 12 7.6l7.2 7.2"/></symbol>
+<symbol id="ic-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 18.4h9.8a3.6 3.6 0 0 0 .4-7.2 5.4 5.4 0 0 0-10.4-1.2 3.7 3.7 0 0 0 .2 8.4z"/></symbol>
+<symbol id="ic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 6.4l11.2 11.2M17.6 6.4 6.4 17.6"/></symbol>
+</defs></svg>
+
+<div data-theme="{{ tema }}" style="--brand: {{ marca }};background:var(--canvas);min-height:100%;padding:56px 64px 96px;font-family:Barlow,sans-serif">
+
+<section style="display:block;margin-bottom:80px">
+  <div style="max-width:1720px;margin:0 0 40px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <span style="display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid var(--brand-line);border-radius:6px;background:var(--brand-soft);font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">2A</span>
+      <span style="font:500 13px Barlow;letter-spacing:.18em;text-transform:uppercase;color:var(--canvas-muted)">Fluxos das novas referências</span>
+    </div>
+    <h2 style="margin:0 0 12px;font:700 40px/1.05 'Barlow Condensed',Barlow;letter-spacing:-.005em;color:var(--canvas-ink);text-transform:uppercase">Confirmação, facial, lembretes e ajustes</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.5 Barlow;color:var(--canvas-muted);text-wrap:pretty">Seis telas dos fluxos dos prints, redesenhadas na identidade Turin: confirmação com perímetro e cancelamento automático, identificação facial com contagem, lembretes de marcação, histórico filtrado por data, detalhe da solicitação e escala prevista × realizada.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:48px 40px;max-width:1720px">
+
+  <!-- 12 CONFIRMAR -->
+  <div id="s12" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">12</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Confirmar registro</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">perímetro + contagem</span></div>
+    <div data-screen-label="12 Confirmar registro" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>06:44</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 20px 0;display:flex;align-items:center;height:52px">
+        <a href="#s04" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+      </div>
+      <div style="flex:none;padding:12px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font:400 13px Barlow;color:var(--muted)">3 de setembro de 2026</div>
+          <div style="margin-top:2px;display:flex;align-items:flex-end;gap:9px">
+            <span style="font:700 46px/1 'Barlow Condensed',Barlow;color:var(--text)">06:44</span>
+            <span style="font:500 12px Barlow;color:var(--muted);padding-bottom:6px">GMT−03:00</span>
+            <svg style="width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;margin-bottom:5px"><use href="#ic-cloud"></use></svg>
+          </div>
+        </div>
+        <span style="width:56px;height:56px;border-radius:50%;flex:none;background:var(--surface2);border:2px solid var(--brand);display:inline-flex;align-items:center;justify-content:center;font:700 18px Barlow;color:var(--brand-ink)">RA</span>
+      </div>
+      <div style="flex:1;min-height:0;padding:0 20px;display:flex;flex-direction:column">
+        <div style="flex:1;min-height:0;border-radius:20px;overflow:hidden;position:relative;background:var(--surface2);border:1px solid var(--line2)">
+          <div style="position:absolute;inset:0;opacity:.55;background:linear-gradient(90deg,transparent 49.4%,var(--line) 50%,transparent 50.6%) 0 0/58px 58px,linear-gradient(0deg,transparent 49.4%,var(--line) 50%,transparent 50.6%) 0 0/58px 58px"></div>
+          <div style="position:absolute;left:-40px;top:210px;width:500px;height:22px;background:var(--line);transform:rotate(-14deg)"></div>
+          <div style="position:absolute;left:-40px;top:206px;width:500px;height:2px;background:var(--surface);transform:rotate(-14deg)"></div>
+          <div style="position:absolute;left:96px;top:-30px;width:15px;height:520px;background:var(--line2);transform:rotate(7deg)"></div>
+          <div style="position:absolute;left:236px;top:-30px;width:12px;height:520px;background:var(--line2);transform:rotate(-5deg)"></div>
+          <div style="position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:168px;height:168px;border-radius:50%;background:var(--brand-soft);border:1.5px solid var(--brand-line)"></div>
+          <div style="position:absolute;left:50%;top:56%;transform:translate(-50%,-100%);width:34px;height:44px;display:flex;align-items:flex-start;justify-content:center">
+            <span style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:var(--brand);transform:rotate(-45deg);display:block;box-shadow:0 8px 16px -6px rgba(11,175,41,.85)"></span>
+          </div>
+          <div style="position:absolute;top:14px;left:22px;right:22px;height:42px;border-radius:12px;background:var(--brand);display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 10px 22px -12px rgba(11,175,41,.9)">
+            <svg style="width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-check"></use></svg>
+            <span style="font:700 13px Barlow;letter-spacing:.12em;text-transform:uppercase;color:#fff">Dentro do perímetro</span>
+          </div>
+          <div style="position:absolute;bottom:14px;left:14px;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 13px;border-radius:11px;background:var(--surface);border:1px solid var(--line);font:600 12.5px Barlow;color:var(--text)"><svg style="width:15px;height:15px;fill:none;stroke:var(--brand);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-pin"></use></svg>Garagem Contagem · 28 m</div>
+        </div>
+      </div>
+      <div style="flex:none;padding:18px 20px 30px;display:flex;flex-direction:column;gap:12px">
+        <button style="height:58px;border:0;border-radius:16px;background:var(--brand);color:#fff;font:700 15px Barlow;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 14px 28px -14px rgba(11,175,41,.95)" style-hover="background:var(--brand-ink)">Confirmar entrada</button>
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px">
+          <span style="width:30px;height:30px;border-radius:50%;flex:none;background:var(--surface);border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font:700 12px Barlow;color:var(--text2)">{{ contagem }}</span>
+          <span style="font:400 12.5px Barlow;color:var(--muted)">Cancelamento automático em {{ contagem }} segundos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 FACIAL -->
+  <div id="s13" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">13</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Identificação facial</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">contagem regressiva</span></div>
+    <div data-screen-label="13 Identificacao facial" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>06:44</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 20px 0;display:flex;align-items:center;height:52px">
+        <a href="#s12" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+      </div>
+      <div style="flex:none;padding:14px 20px 20px">
+        <div style="font:700 30px/1.05 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.01em;color:var(--text)">Identificação facial</div>
+        <div style="margin-top:6px;font:400 13.5px/1.45 Barlow;color:var(--muted)">Segure o aparelho na altura dos olhos e mantenha o rosto dentro da moldura.</div>
+      </div>
+      <div style="flex:1;min-height:0;padding:0 20px;display:flex">
+        <div style="flex:1;border-radius:22px;overflow:hidden;position:relative;background:var(--deep)">
+          <div style="position:absolute;inset:0;background:radial-gradient(70% 55% at 50% 42%,#25382E 0%,#0B1611 70%,#050C08 100%)"></div>
+          <div style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:212px;height:284px;border-radius:50%;border:3px solid var(--brand);background:rgba(11,175,41,.06);display:flex;align-items:center;justify-content:center">
+            <span style="font:700 84px/1 'Barlow Condensed',Barlow;color:rgba(255,255,255,.78)">{{ facial }}</span>
+          </div>
+          <div style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:236px;height:308px;border-radius:50%;border:1px solid rgba(11,175,41,.35);animation:tpulse 2.4s ease-out infinite"></div>
+          <div style="position:absolute;bottom:22px;left:22px;right:22px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border-radius:13px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14)">
+              <svg style="width:18px;height:18px;fill:none;stroke:#5BE07A;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-check"></use></svg>
+              <span style="flex:1;font:600 13px Barlow;color:#fff">Rosto detectado · boa iluminação</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <i style="flex:1;height:4px;border-radius:2px;background:var(--brand);display:block"></i>
+              <i style="flex:1;height:4px;border-radius:2px;background:var(--brand);display:block"></i>
+              <i style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.22);display:block"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:none;padding:18px 20px 30px;display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;font:600 13px Barlow;color:var(--text2)">Capturando em {{ facial }}…</div>
+        <button style="height:50px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text2);font:600 14px Barlow;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer" style-hover="border-color:var(--bad);color:var(--bad)"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-x"></use></svg>Cancelar registro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14 LEMBRETES -->
+  <div id="s14" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">14</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Lembretes</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">toggles funcionais</span></div>
+    <div data-screen-label="14 Lembretes" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>06:45</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 20px 18px;display:flex;align-items:center;gap:13px;height:56px">
+        <a href="#s08" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text);flex:none"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+        <span style="font:700 26px 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">Lembretes</span>
+      </div>
+      <div style="flex:none;margin:0 20px 16px;padding:13px 15px;border-radius:15px;background:var(--brand-soft);border:1px solid var(--brand-line);display:flex;gap:11px;align-items:flex-start">
+        <svg style="width:19px;height:19px;fill:none;stroke:var(--brand-ink);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px"><use href="#ic-bell"></use></svg>
+        <span style="font:400 12.5px/1.45 Barlow;color:var(--text2)">Avisamos 2 minutos antes de cada marcação prevista na sua escala.</span>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ lembretes }}" as="l" hint-placeholder-count="4">
+          <div style="background:var(--surface);border:1px solid {{ l.border }};border-radius:18px;padding:15px 16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="flex:1;font:700 30px/1 'Barlow Condensed',Barlow;color: {{ l.horaInk }}">{{ l.hora }}</span>
+              <span onClick="{{ l.onClick }}" style="width:48px;height:28px;border-radius:16px;flex:none;padding:3px;display:flex;cursor:pointer;background: {{ l.trackBg }};justify-content: {{ l.justify }};transition:all .18s ease">
+                <i style="width:22px;height:22px;border-radius:50%;background:#fff;display:block;box-shadow:0 2px 5px rgba(0,0,0,.22)"></i>
+              </span>
+            </div>
+            <div style="margin-top:9px;padding-top:10px;border-top:1px solid var(--line2);display:flex;align-items:center;gap:10px">
+              <span style="flex:1;font:500 13px Barlow;color:var(--text2)">{{ l.dias }}</span>
+              <span style="font:600 11px Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">{{ l.tipo }}</span>
+              <svg style="width:17px;height:17px;fill:none;stroke:var(--muted);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-chev-d"></use></svg>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;padding:16px 20px 30px;display:flex;justify-content:flex-end">
+        <button style="height:54px;padding:0 24px;border:0;border-radius:27px;background:var(--brand);color:#fff;font:700 14px Barlow;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:9px;cursor:pointer;box-shadow:0 14px 28px -12px rgba(11,175,41,.95)" style-hover="background:var(--brand-ink)"><svg style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-plus"></use></svg>Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15 FILTRO POR DATA -->
+  <div id="s15" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">15</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Histórico de ajustes</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">filtro por data</span></div>
+    <div data-screen-label="15 Filtro por data" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>06:45</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 20px 16px;display:flex;align-items:center;gap:13px;height:56px">
+        <a href="#s07" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text);flex:none"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+        <span style="flex:1;font:600 17px Barlow;color:var(--text)">Ajustes de marcação</span>
+      </div>
+      <div style="flex:none;padding:0 20px 16px">
+        <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 2px 9px">Filtro por data</div>
+        <div style="display:flex;gap:10px">
+          <span style="flex:1;display:flex;align-items:center;gap:11px;height:60px;padding:0 14px;border-radius:15px;background:var(--surface);border:1px solid var(--line2);cursor:pointer" style-hover="border-color:var(--brand-line)">
+            <svg style="width:21px;height:21px;fill:none;stroke:var(--brand-ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-cal"></use></svg>
+            <span style="min-width:0">
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Inicial</span>
+              <span style="display:block;font:600 15px Barlow;color:var(--text)">27/08/2026</span>
+            </span>
+          </span>
+          <span style="flex:1;display:flex;align-items:center;gap:11px;height:60px;padding:0 14px;border-radius:15px;background:var(--surface);border:1px solid var(--line2);cursor:pointer" style-hover="border-color:var(--brand-line)">
+            <svg style="width:21px;height:21px;fill:none;stroke:var(--brand-ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-cal"></use></svg>
+            <span style="min-width:0">
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Final</span>
+              <span style="display:block;font:600 15px Barlow;color:var(--text)">03/09/2026</span>
+            </span>
+          </span>
+        </div>
+      </div>
+      <div style="flex:none;padding:0 20px 12px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font:500 12.5px Barlow;color:var(--muted)">4 solicitações no período</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;font:600 12.5px Barlow;color:var(--brand-ink);cursor:pointer"><svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-filter"></use></svg>Ordenar</span>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ ajustes }}" as="a" hint-placeholder-count="4">
+          <div style="display:flex;background:var(--surface);border:1px solid var(--line2);border-radius:18px;overflow:hidden;box-shadow:0 8px 20px -18px var(--shadow)">
+            <i style="width:5px;flex:none;background: {{ a.barra }};display:block"></i>
+            <div style="flex:1;min-width:0;padding:15px 16px">
+              <div style="display:flex;align-items:flex-start;gap:10px">
+                <span style="flex:1;font:600 16px Barlow;color:var(--text)">Ajuste de marcação</span>
+                <span style="flex:none;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:7px;font:700 10px Barlow;letter-spacing:.1em;text-transform:uppercase;background: {{ a.tagBg }};color: {{ a.tagInk }};border:1px solid {{ a.tagLine }}">{{ a.status }}</span>
+              </div>
+              <div style="margin-top:5px;font:400 13.5px Barlow;color:var(--text2)">Referente ao dia {{ a.ref }}</div>
+              <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font:500 11.5px Barlow;color:var(--muted)">Protocolo {{ a.proto }}</span>
+                <span style="font:500 11.5px Barlow;color:var(--muted)">{{ a.quando }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsSolic }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16 DETALHE SOLICITAÇÃO -->
+  <div id="s16" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">16</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Detalhe da solicitação</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">folha sobre a lista</span></div>
+    <div data-screen-label="16 Detalhe da solicitacao" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="position:absolute;inset:0;filter:blur(5px);opacity:.55;padding:52px 20px 0;display:flex;flex-direction:column;gap:11px">
+        <div style="font:700 26px 'Barlow Condensed',Barlow;text-transform:uppercase;color:var(--text)">Solicitações</div>
+        <div style="height:74px;border-radius:18px;background:var(--brand);display:block"></div>
+        <div style="height:74px;border-radius:18px;background:var(--surface);border:1px solid var(--line2);display:block"></div>
+        <div style="height:74px;border-radius:18px;background:var(--surface);border:1px solid var(--line2);display:block"></div>
+        <div style="height:74px;border-radius:18px;background:var(--surface);border:1px solid var(--line2);display:block"></div>
+      </div>
+      <div style="position:absolute;inset:0;background:rgba(7,19,13,.52)"></div>
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;position:relative"><span>06:46</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:1;position:relative;display:flex;align-items:flex-end;padding:0 0 0"></div>
+      <div style="flex:none;position:relative;margin:0 14px 26px;border-radius:26px;background:var(--surface);box-shadow:0 -12px 44px -14px rgba(0,0,0,.42);padding:22px 22px 24px;animation:tfade .3s ease both">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
+          <div style="min-width:0">
+            <span style="display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:8px;background:var(--brand-soft);border:1px solid var(--brand-line);font:700 10.5px Barlow;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-ink)"><svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-check"></use></svg>Aprovado</span>
+            <div style="margin-top:11px;font:700 28px/1.08 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.01em;color:var(--text)">Ajuste de marcação</div>
+            <div style="margin-top:4px;font:500 12.5px Barlow;color:var(--muted)">Protocolo #4790 · 01/09/2026 às 06:50</div>
+          </div>
+          <span style="width:38px;height:38px;border-radius:12px;flex:none;background:var(--surface2);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-x"></use></svg></span>
+        </div>
+        <div style="margin-top:20px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font:600 10.5px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Registros alterados</div>
+            <div style="margin-top:7px;font:600 14px Barlow;color:var(--text)">31/08/2026 · segunda-feira</div>
+            <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:7px">
+              <sc-for list="{{ registrosAjuste }}" as="r" hint-placeholder-count="4">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:10px;background:var(--brand-soft);border:1px solid var(--brand-line);font:700 15px 'Barlow Condensed',Barlow;letter-spacing:.02em;color:var(--brand-ink)">{{ r }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--line2);display:block"></div>
+          <div>
+            <div style="font:600 10.5px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Motivo informado</div>
+            <div style="margin-top:6px;font:400 14px/1.45 Barlow;color:var(--text)">Esqueci de registrar a saída ao encerrar a viagem na garagem.</div>
+          </div>
+          <div style="height:1px;background:var(--line2);display:block"></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="width:40px;height:40px;border-radius:13px;flex:none;background:var(--surface2);display:inline-flex;align-items:center;justify-content:center;font:700 14px Barlow;color:var(--text2)">VS</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 10.5px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Aprovado por</span>
+              <span style="display:block;font:600 14px Barlow;color:var(--text)">Viviane Silva · Encarregada</span>
+            </span>
+            <svg style="width:19px;height:19px;fill:none;stroke:var(--brand-ink);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-shield"></use></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17 ESCALA PREVISTA X REALIZADA -->
+  <div id="s17" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">17</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Prevista × realizada</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">acordeão clicável</span></div>
+    <div data-screen-label="17 Prevista x realizada" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>06:46</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 20px 14px;display:flex;align-items:center;gap:13px;height:56px">
+        <a href="#s06" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text);flex:none"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+        <span style="flex:1;font:600 17px Barlow;color:var(--text)">Jornada do dia</span>
+      </div>
+      <div style="flex:none;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 12px 14px">
+        <div style="text-align:center;font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:11px">Dias disponíveis</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="width:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></span>
+          <sc-for list="{{ diasDisp }}" as="w" hint-placeholder-count="5">
+            <span onClick="{{ w.onClick }}" style="flex:1;padding:9px 0 8px;border-radius:14px;text-align:center;cursor:pointer;background: {{ w.bg }};border:1px solid {{ w.border }}">
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.08em;text-transform:lowercase;color: {{ w.subInk }}">{{ w.mes }}</span>
+              <span style="display:block;margin:1px 0 1px;font:700 22px/1 'Barlow Condensed',Barlow;color: {{ w.dInk }}">{{ w.d }}</span>
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.06em;color: {{ w.subInk }}">{{ w.dow }}</span>
+            </span>
+          </sc-for>
+          <span style="width:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-r"></use></svg></span>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:11px;align-items:flex-start;padding:14px 15px;border-radius:16px;background:rgba(217,138,0,.10);border:1px solid rgba(217,138,0,.32)">
+          <svg style="width:19px;height:19px;fill:none;stroke:var(--warn);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px"><use href="#ic-alert"></use></svg>
+          <span style="min-width:0">
+            <span style="display:block;font:600 13px Barlow;color:var(--text)">Atenção</span>
+            <span style="display:block;margin-top:2px;font:400 12.5px/1.45 Barlow;color:var(--text2)">A jornada em andamento pode levar alguns minutos para atualizar os dados.</span>
+          </span>
+        </div>
+        <sc-for list="{{ blocosEscala }}" as="b" hint-placeholder-count="2">
+          <div style="background:var(--surface);border:1px solid {{ b.border }};border-radius:18px;overflow:hidden">
+            <div onClick="{{ b.onClick }}" style="display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;min-height:64px">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 16px Barlow;color:var(--text)">{{ b.titulo }}</span>
+                <span style="display:block;margin-top:1px;font:400 12.5px Barlow;color:var(--muted)">{{ b.sub }}</span>
+              </span>
+              <span style="flex:none;text-align:right">
+                <span style="display:block;font:600 9.5px Barlow;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">tempo</span>
+                <span style="display:block;font:700 19px/1 'Barlow Condensed',Barlow;color: {{ b.tempoInk }}">{{ b.tempo }}</span>
+              </span>
+              <svg style="width:20px;height:20px;fill:none;stroke:var(--brand-ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="{{ b.chev }}"></use></svg>
+            </div>
+            <sc-if value="{{ b.aberto }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:0 16px 16px;border-top:1px solid var(--line2)">
+                <sc-if value="{{ b.vazio }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:20px 0 6px;text-align:center;font:500 13.5px Barlow;color:var(--muted)">Nenhum período realizado</div>
+                </sc-if>
+                <sc-for list="{{ b.periodos }}" as="p" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)">
+                    <span style="width:28px;height:28px;border-radius:9px;flex:none;background:var(--surface2);color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center"><svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="{{ p.icon }}"></use></svg></span>
+                    <span style="flex:1;font:500 13px Barlow;color:var(--text2)">{{ p.label }}</span>
+                    <span style="font:700 17px 'Barlow Condensed',Barlow;color:var(--text)">{{ p.faixa }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;padding:16px 20px 30px">
+        <button style="width:100%;height:56px;border:0;border-radius:16px;background:var(--brand);color:#fff;font:700 15px Barlow;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 14px 28px -14px rgba(11,175,41,.95)" style-hover="background:var(--brand-ink)"><svg style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-swap"></use></svg>Solicitar ajuste</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+
+<section style="display:block">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:40px;max-width:1720px;margin:0 0 44px">
+    <div style="max-width:760px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <span style="display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid var(--brand-line);border-radius:6px;background:var(--brand-soft);font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">1A</span>
+        <span style="font:500 13px Barlow;letter-spacing:.18em;text-transform:uppercase;color:var(--canvas-muted)">Turin Transportes · app de ponto</span>
+      </div>
+      <h1 style="margin:0 0 14px;font:700 54px/1.02 'Barlow Condensed',Barlow;letter-spacing:-.01em;color:var(--canvas-ink);text-transform:uppercase">Meu Ponto Turin</h1>
+      <p style="margin:0;max-width:600px;font:400 17px/1.5 Barlow;color:var(--canvas-muted);text-wrap:pretty">Onze telas do fluxo completo — registro por geolocalização com cerca virtual e selfie, espelho de ponto, solicitações e visão de gestor. Tema claro e escuro no painel de ajustes.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;flex:none">
+      <img src="assets/turin-logo.webp" alt="Turin Transportes" style="width:196px;height:auto;display:block">
+      <div style="display:flex;gap:8px">
+        <span style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 11px;border-radius:6px;background:var(--surface);border:1px solid var(--line);font:600 11px Barlow;letter-spacing:.06em;color:var(--text2)"><i style="width:10px;height:10px;border-radius:3px;background:var(--brand);display:block"></i>0BAF29</span>
+        <span style="display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:6px;background:var(--surface);border:1px solid var(--line);font:600 11px Barlow;letter-spacing:.06em;color:var(--text2)">Barlow / Barlow Condensed</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:48px 40px;max-width:1720px">
+
+  <!-- 01 SPLASH -->
+  <div id="s01" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">01</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Abertura</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">splash</span></div>
+    <div data-screen-label="01 Splash" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#07130D;box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 12%,#0BAF29 0%,#07752b 42%,#04150c 100%)"></div>
+      <div style="position:absolute;inset:0;opacity:.14;background:repeating-linear-gradient(115deg,transparent 0 26px,rgba(255,255,255,.9) 26px 27px)"></div>
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;position:relative"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:1;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:26px;padding:0 44px">
+        <img src="assets/turin-logo.webp" alt="Turin" style="width:250px;filter:brightness(0) invert(1);animation:tfade .7s ease both">
+        <div style="width:56px;height:1px;background:rgba(255,255,255,.45)"></div>
+        <div style="text-align:center">
+          <div style="font:700 40px/1 'Barlow Condensed',Barlow;letter-spacing:.02em;color:#fff;text-transform:uppercase">Meu Ponto</div>
+          <div style="margin-top:6px;font:500 14px Barlow;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.72)">Turin Transportes</div>
+        </div>
+      </div>
+      <div style="flex:none;position:relative;padding:0 44px 54px;display:flex;flex-direction:column;align-items:center;gap:18px">
+        <div style="width:150px;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden;position:relative"><span style="position:absolute;inset:0;width:44%;background:#fff;border-radius:2px;animation:tsheen 1.5s ease-in-out infinite"></span></div>
+        <div style="font:500 12px Barlow;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6)">Sincronizando marcações</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 LOGIN -->
+  <div id="s02" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">02</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Acesso</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">matrícula + senha</span></div>
+    <div data-screen-label="02 Login" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--surface);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;background:var(--deep)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;height:196px;background:linear-gradient(160deg,#0BAF29,#06651f 92%);padding:30px 30px 0;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-40px;top:-30px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,.22)"></div>
+        <div style="position:absolute;right:10px;top:40px;width:130px;height:130px;border-radius:50%;border:1px solid rgba(255,255,255,.16)"></div>
+        <img src="assets/turin-logo.webp" alt="Turin" style="width:150px;filter:brightness(0) invert(1);position:relative">
+        <div style="margin-top:22px;font:700 30px/1.05 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.01em;color:#fff;position:relative">Bem-vindo<br>de volta</div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:30px 30px 0;display:flex;flex-direction:column;gap:16px;background:var(--surface)">
+        <label style="display:block">
+          <span style="display:block;font:600 11px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Matrícula</span>
+          <span style="display:flex;align-items:center;gap:12px;height:54px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)">
+            <svg style="width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-user"></use></svg>
+            <span style="font:600 17px Barlow;color:var(--text);letter-spacing:.04em">04182</span>
+          </span>
+        </label>
+        <label style="display:block">
+          <span style="display:block;font:600 11px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Senha</span>
+          <span style="display:flex;align-items:center;gap:12px;height:54px;padding:0 16px;border:1.5px solid var(--brand);border-radius:14px;background:var(--surface);box-shadow:0 0 0 4px var(--brand-soft)">
+            <svg style="width:20px;height:20px;fill:none;stroke:var(--brand);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-lock"></use></svg>
+            <span style="flex:1;font:700 18px Barlow;letter-spacing:.32em;color:var(--text)">••••••</span>
+            <svg style="width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-eye"></use></svg>
+          </span>
+        </label>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="display:flex;align-items:center;gap:9px;font:500 14px Barlow;color:var(--text2)"><i style="width:20px;height:20px;border-radius:6px;background:var(--brand);display:inline-flex;align-items:center;justify-content:center"><svg style="width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-check"></use></svg></i>Manter conectado</span>
+          <a href="#s02" style="font:600 14px Barlow;color:var(--brand-ink)">Esqueci a senha</a>
+        </div>
+        <button style="margin-top:6px;height:56px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:700 15px Barlow;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 12px 24px -12px rgba(11,175,41,.9)" style-hover="background:var(--brand-ink)">Entrar</button>
+        <div style="display:flex;align-items:center;gap:14px;margin:6px 0 2px"><i style="flex:1;height:1px;background:var(--line);display:block"></i><span style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">ou</span><i style="flex:1;height:1px;background:var(--line);display:block"></i></div>
+        <button style="height:56px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:600 15px Barlow;display:flex;align-items:center;justify-content:center;gap:11px;cursor:pointer" style-hover="border-color:var(--brand);color:var(--brand-ink)">
+          <svg style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-face"></use></svg>Entrar com Face ID
+        </button>
+      </div>
+      <div style="flex:none;padding:22px 30px 30px;text-align:center;font:400 12px Barlow;color:var(--muted)">Turin Transportes · v2.4.1 · Suporte RH (31) 3000-0000</div>
+    </div>
+  </div>
+
+  <!-- 03 HOME -->
+  <div id="s03" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">03</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Início</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">home do colaborador</span></div>
+    <div data-screen-label="03 Home" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;background:#0BAF29"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;background:#0BAF29;padding:6px 22px 26px;color:#fff">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+          <img src="assets/turin-logo.webp" alt="Turin" style="width:104px;filter:brightness(0) invert(1)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;position:relative"><svg style="width:21px;height:21px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-bell"></use></svg><i style="position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:#FFD34D;border:1.5px solid #0BAF29"></i></span>
+            <span style="width:40px;height:40px;border-radius:12px;background:#fff;color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px Barlow;letter-spacing:.02em">RA</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;font:400 15px Barlow;color:rgba(255,255,255,.82)">Bom dia,</div>
+        <div style="font:700 30px/1.1 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.01em">Ricardo Alves</div>
+        <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:7px;background:rgba(255,255,255,.16);font:600 12px Barlow"><svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-bus"></use></svg>Linha 302</span>
+          <span style="display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:7px;background:rgba(255,255,255,.16);font:600 12px Barlow">Matrícula 04182</span>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 18px;margin-top:-14px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--surface);border-radius:20px;padding:20px;box-shadow:0 10px 26px -18px var(--shadow);border:1px solid var(--line2)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">Agora · qui, 12 set</div>
+              <div style="font:700 52px/1 'Barlow Condensed',Barlow;color:var(--text);letter-spacing:-.01em">{{ relogio }}</div>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:9px;background:var(--brand-soft);border:1px solid var(--brand-line);font:600 12px Barlow;color:var(--brand-ink)"><i style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:block"></i>Em jornada</span>
+          </div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface2)">
+            <svg style="width:20px;height:20px;fill:none;stroke:var(--brand);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-pin"></use></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:600 14px Barlow;color:var(--text)">Garagem Contagem</div>
+              <div style="font:400 12px Barlow;color:var(--muted)">Dentro da cerca virtual · 32 m</div>
+            </div>
+          </div>
+          <button style="margin-top:14px;width:100%;height:54px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:700 14px Barlow;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer" style-hover="background:var(--brand-ink)">
+            <svg style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-clock"></use></svg>Marcar ponto
+          </button>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 4px 9px">
+            <span style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">Marcações de hoje</span>
+            <a href="#s06" style="font:600 12px Barlow;color:var(--brand-ink)">Ver detalhe</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <sc-for list="{{ marcacoes }}" as="m" hint-placeholder-count="4">
+              <div style="background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:11px 8px;text-align:center">
+                <div style="font:600 9px Barlow;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);height:22px">{{ m.label }}</div>
+                <div style="font:700 20px 'Barlow Condensed',Barlow;color:var(--text)">{{ m.time }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:15px">
+            <div style="font:600 10px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Banco de horas</div>
+            <div style="margin-top:5px;font:700 28px/1 'Barlow Condensed',Barlow;color:var(--brand-ink)">+04:32</div>
+            <div style="margin-top:10px;height:5px;border-radius:3px;background:var(--line);overflow:hidden"><i style="display:block;height:100%;width:62%;background:var(--brand);border-radius:3px"></i></div>
+          </div>
+          <div style="flex:1;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:15px">
+            <div style="font:600 10px Barlow;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Escala de hoje</div>
+            <div style="margin-top:5px;font:700 22px/1.1 'Barlow Condensed',Barlow;color:var(--text)">06:40–15:20</div>
+            <div style="margin-top:6px;font:400 12px Barlow;color:var(--muted)">Turno 1 · Veículo 4412</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px">
+          <a href="#s06" style="flex:1;height:48px;border-radius:13px;background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;gap:8px;font:600 13px Barlow;color:var(--text2)" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-swap"></use></svg>Ajuste</a>
+          <a href="#s07" style="flex:1;height:48px;border-radius:13px;background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;gap:8px;font:600 13px Barlow;color:var(--text2)" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-doc"></use></svg>Atestado</a>
+          <a href="#s11" style="flex:1;height:48px;border-radius:13px;background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;gap:8px;font:600 13px Barlow;color:var(--text2)" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-mirror"></use></svg>Escala</a>
+        </div>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsInicio }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 BATER PONTO -->
+  <div id="s04" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">04</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Bater ponto</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">toque no botão — fluxo real</span></div>
+    <div data-screen-label="04 Bater ponto" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;height:52px;display:flex;align-items:center;gap:12px;padding:0 18px">
+        <a href="#s03" style="width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+        <span style="font:600 17px Barlow;color:var(--text)">Registrar ponto</span>
+      </div>
+      <div style="flex:none;margin:0 18px;height:112px;border-radius:18px;overflow:hidden;position:relative;border:1px solid var(--line2);background:var(--surface2)">
+        <div style="position:absolute;inset:0;opacity:.5;background:linear-gradient(90deg,transparent 49.5%,var(--line) 50%,transparent 50.5%) 0 0/44px 44px,linear-gradient(0deg,transparent 49.5%,var(--line) 50%,transparent 50.5%) 0 0/44px 44px"></div>
+        <div style="position:absolute;left:-20px;top:64px;width:440px;height:16px;background:var(--line);transform:rotate(-7deg)"></div>
+        <div style="position:absolute;left:120px;top:-20px;width:14px;height:180px;background:var(--line2);transform:rotate(9deg)"></div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:50%;background:var(--brand-soft);border:1px solid var(--brand-line)"></div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px -4px rgba(11,175,41,.8)"><svg style="width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-pin"></use></svg></div>
+        <div style="position:absolute;left:12px;bottom:10px;display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font:600 12px Barlow;color:var(--text)"><i style="width:7px;height:7px;border-radius:50%;background:var(--ok);display:block"></i>Garagem Contagem · 32 m</div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 26px;position:relative">
+        <div style="font:600 11px Barlow;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Próxima marcação</div>
+        <div style="font:700 24px 'Barlow Condensed',Barlow;text-transform:uppercase;color:var(--text);letter-spacing:.02em;margin-bottom:18px">{{ pontoTipo }}</div>
+        <button onClick="{{ avancarPonto }}" style="position:relative;flex:none;width:184px;height:184px;border-radius:50%;border:0;cursor:pointer;background: {{ botaoBg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#fff;box-shadow:0 20px 44px -16px rgba(11,175,41,.75)">
+          <span style="position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--brand);animation:tpulse 2.1s ease-out infinite"></span>
+          <sc-if value="{{ botaoIcone }}" hint-placeholder-val="{{ false }}"><svg style="width:40px;height:40px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ botaoIcone }}"></use></svg></sc-if>
+          <span style="font:700 14px Barlow;letter-spacing:.12em;text-transform:uppercase;max-width:140px;text-align:center;line-height:1.2">{{ botaoTexto }}</span>
+        </button>
+        <div style="margin-top:16px;font:700 30px/1 'Barlow Condensed',Barlow;color:var(--text)">{{ relogio }}</div>
+        <div style="margin-top:3px;font:400 13px Barlow;color:var(--muted);text-align:center">{{ pontoDica }}</div>
+      </div>
+      <div style="flex:none;padding:0 18px 16px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ etapasPonto }}" as="e" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;height:52px;padding:0 14px;border-radius:14px;background:var(--surface);border:1px solid {{ e.border }}">
+            <span style="width:26px;height:26px;border-radius:9px;flex:none;display:inline-flex;align-items:center;justify-content:center;background: {{ e.chipBg }};color: {{ e.chipInk }};font:700 12px Barlow"><sc-if value="{{ e.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><use href="{{ e.icon }}"></use></svg></sc-if></span>
+            <span style="flex:1;font:600 14px Barlow;color:var(--text)">{{ e.label }}</span>
+            <span style="font:500 12px Barlow;color: {{ e.statusInk }}">{{ e.status }}</span>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 6px 0">
+          <span style="font:400 12px Barlow;color:var(--muted)">Última: ontem 16:47 · Saída</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:500 12px Barlow;color:var(--muted)"><i style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:block"></i>Sincronizado</span>
+        </div>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsPonto }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 ESPELHO -->
+  <div id="s05" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">05</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Espelho de ponto</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">histórico do mês</span></div>
+    <div data-screen-label="05 Espelho de ponto" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 18px 16px;background:var(--surface);border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+          <span style="font:700 22px 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">Espelho de ponto</span>
+          <span style="width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text2)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-doc"></use></svg></span>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 8px;border-radius:14px;background:var(--surface2)">
+          <span style="width:32px;height:32px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer"><svg style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></span>
+          <span style="font:600 15px Barlow;color:var(--text);letter-spacing:.02em">Setembro 2026</span>
+          <span style="width:32px;height:32px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer"><svg style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-r"></use></svg></span>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+          <sc-for list="{{ resumoMes }}" as="r" hint-placeholder-count="4">
+            <div style="padding:10px 6px;border-radius:12px;background:var(--surface2);text-align:center">
+              <div style="font:700 19px 'Barlow Condensed',Barlow;color: {{ r.ink }}">{{ r.v }}</div>
+              <div style="margin-top:1px;font:600 9px Barlow;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">{{ r.k }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:none;display:flex;gap:7px;padding:12px 18px 10px;overflow:hidden">
+        <sc-for list="{{ filtrosEspelho }}" as="f" hint-placeholder-count="3">
+          <span onClick="{{ f.onClick }}" style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font:600 13px Barlow;background: {{ f.bg }};color: {{ f.ink }};border:1px solid {{ f.border }}">{{ f.label }}</span>
+        </sc-for>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 18px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ dias }}" as="d" hint-placeholder-count="7">
+          <a href="#s06" style="display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line2);text-decoration:none" style-hover="border-color:var(--brand-line);background:var(--surface2)">
+            <span style="width:44px;flex:none;text-align:center">
+              <span style="display:block;font:700 22px/1 'Barlow Condensed',Barlow;color:var(--text)">{{ d.d }}</span>
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">{{ d.dow }}</span>
+            </span>
+            <span style="width:1px;height:34px;background:var(--line);flex:none;display:block"></span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 13px Barlow;color:var(--text2);letter-spacing:.01em">{{ d.marks }}</span>
+              <span style="display:block;margin-top:3px;font:500 11px Barlow;color: {{ d.tagInk }}">{{ d.tag }}</span>
+            </span>
+            <span style="flex:none;font:700 15px Barlow;color: {{ d.saldoInk }}">{{ d.saldo }}</span>
+          </a>
+        </sc-for>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsEspelho }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 DETALHE DO DIA -->
+  <div id="s06" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">06</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Detalhe do dia</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">+ solicitar ajuste</span></div>
+    <div data-screen-label="06 Detalhe do dia" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 18px 18px;background:var(--surface);border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:12px;height:44px">
+          <a href="#s05" style="width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+          <span style="font:600 17px Barlow;color:var(--text)">Quarta, 11 de setembro</span>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <div style="flex:1;padding:12px 14px;border-radius:14px;background:var(--surface2)">
+            <div style="font:600 9px Barlow;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Trabalhadas</div>
+            <div style="margin-top:2px;font:700 24px/1 'Barlow Condensed',Barlow;color:var(--text)">08:46</div>
+          </div>
+          <div style="flex:1;padding:12px 14px;border-radius:14px;background:var(--surface2)">
+            <div style="font:600 9px Barlow;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Previstas</div>
+            <div style="margin-top:2px;font:700 24px/1 'Barlow Condensed',Barlow;color:var(--text)">08:00</div>
+          </div>
+          <div style="flex:1;padding:12px 14px;border-radius:14px;background:var(--brand-soft);border:1px solid var(--brand-line)">
+            <div style="font:600 9px Barlow;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-ink)">Saldo</div>
+            <div style="margin-top:2px;font:700 24px/1 'Barlow Condensed',Barlow;color:var(--brand-ink)">+00:46</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:16px 18px 0;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border-radius:15px;background:rgba(217,138,0,.10);border:1px solid rgba(217,138,0,.32)">
+          <svg style="width:20px;height:20px;fill:none;stroke:var(--warn);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px"><use href="#ic-alert"></use></svg>
+          <div>
+            <div style="font:600 13px Barlow;color:var(--text)">Divergência de jornada</div>
+            <div style="margin-top:2px;font:400 12px/1.45 Barlow;color:var(--text2)">Saída registrada 46 min após o fim da escala. Sujeita a validação do RH.</div>
+          </div>
+        </div>
+        <div>
+          <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 4px 10px">Marcações</div>
+          <div style="background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:6px 16px">
+            <sc-for list="{{ timeline }}" as="p" hint-placeholder-count="4">
+              <div style="display:flex;gap:14px;padding:12px 0">
+                <span style="flex:none;width:52px;font:700 17px 'Barlow Condensed',Barlow;color:var(--text);padding-top:1px">{{ p.t }}</span>
+                <span style="flex:none;width:11px;display:flex;flex-direction:column;align-items:center">
+                  <i style="width:11px;height:11px;border-radius:50%;border:2.5px solid var(--brand);background:var(--surface);display:block;flex:none"></i>
+                  <i style="flex:1;width:1.5px;background:var(--line);display:block;min-height:16px"></i>
+                </span>
+                <span style="flex:1;min-width:0;padding-bottom:2px">
+                  <span style="display:block;font:600 14px Barlow;color:var(--text)">{{ p.label }}</span>
+                  <span style="display:block;margin-top:2px;font:400 12px Barlow;color:var(--muted)">{{ p.loc }}</span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;height:22px;padding:0 8px;border-radius:7px;background:var(--surface2);font:600 10px Barlow;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">{{ p.src }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="flex:none;padding:16px 18px 30px;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px">
+        <button style="height:54px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:700 14px Barlow;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer" style-hover="background:var(--brand-ink)"><svg style="width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-swap"></use></svg>Solicitar ajuste</button>
+        <button style="height:50px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text2);font:600 14px Barlow;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-doc"></use></svg>Anexar atestado ou justificativa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 SOLICITAÇÕES -->
+  <div id="s07" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">07</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Solicitações</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">abas funcionais</span></div>
+    <div data-screen-label="07 Solicitacoes" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 18px 0;background:var(--surface)">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+          <span style="font:700 22px 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">Solicitações</span>
+          <span style="width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text2)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-filter"></use></svg></span>
+        </div>
+        <div style="display:flex;gap:20px;margin-top:8px">
+          <sc-for list="{{ abasSolic }}" as="a" hint-placeholder-count="4">
+            <span onClick="{{ a.onClick }}" style="padding:10px 0 12px;cursor:pointer;font:600 14px Barlow;color: {{ a.ink }};border-bottom:2.5px solid {{ a.line }}">{{ a.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ solicitacoes }}" as="s" hint-placeholder-count="4">
+          <div style="background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:15px 16px">
+            <div style="display:flex;align-items:center;gap:11px">
+              <span style="width:36px;height:36px;border-radius:11px;flex:none;display:inline-flex;align-items:center;justify-content:center;background: {{ s.iconBg }};color: {{ s.iconInk }}"><sc-if value="{{ s.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="{{ s.icon }}"></use></svg></sc-if></span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px Barlow;color:var(--text)">{{ s.tipo }}</span>
+                <span style="display:block;margin-top:1px;font:400 12px Barlow;color:var(--muted)">{{ s.meta }}</span>
+              </span>
+              <span style="flex:none;display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:8px;font:600 11px Barlow;letter-spacing:.04em;background: {{ s.tagBg }};color: {{ s.tagInk }}">{{ s.status }}</span>
+            </div>
+            <div style="margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);font:400 12.5px/1.5 Barlow;color:var(--text2)">{{ s.detalhe }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;padding:14px 18px 18px">
+        <button style="width:100%;height:54px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:700 14px Barlow;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 12px 26px -14px rgba(11,175,41,.9)" style-hover="background:var(--brand-ink)"><svg style="width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-plus"></use></svg>Nova solicitação</button>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsSolic }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 PERFIL -->
+  <div id="s08" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">08</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Perfil</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">e configurações</span></div>
+    <div data-screen-label="08 Perfil" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;background:#0BAF29"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;background:#0BAF29;padding:10px 22px 30px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-50px;bottom:-70px;width:190px;height:190px;border-radius:50%;border:1px solid rgba(255,255,255,.2)"></div>
+        <div style="display:flex;align-items:center;gap:15px;position:relative">
+          <span style="width:66px;height:66px;border-radius:20px;background:#fff;color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;font:700 24px Barlow;flex:none">RA</span>
+          <span style="min-width:0">
+            <span style="display:block;font:700 24px/1.15 'Barlow Condensed',Barlow;text-transform:uppercase">Ricardo Alves de Souza</span>
+            <span style="display:block;margin-top:3px;font:400 13px Barlow;color:rgba(255,255,255,.82)">Motorista · Garagem Contagem</span>
+            <span style="display:inline-flex;align-items:center;height:24px;padding:0 9px;margin-top:7px;border-radius:7px;background:rgba(255,255,255,.18);font:600 11px Barlow;letter-spacing:.06em">MATRÍCULA 04182</span>
+          </span>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 18px;margin-top:-16px;display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--surface);border:1px solid var(--line2);border-radius:18px;overflow:hidden;box-shadow:0 10px 26px -20px var(--shadow)">
+          <sc-for list="{{ itensPerfil }}" as="i" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:13px;padding:15px 16px;border-bottom:1px solid var(--line2);cursor:pointer" style-hover="background:var(--surface2)">
+              <span style="width:34px;height:34px;border-radius:11px;background:var(--surface2);color:var(--brand-ink);flex:none;display:inline-flex;align-items:center;justify-content:center"><sc-if value="{{ i.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="{{ i.icon }}"></use></svg></sc-if></span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 14px Barlow;color:var(--text)">{{ i.label }}</span>
+                <span style="display:block;font:400 12px Barlow;color:var(--muted)">{{ i.sub }}</span>
+              </span>
+              <svg style="width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="#ic-chev-r"></use></svg>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:2px 4px -2px">Preferências</div>
+        <div style="background:var(--surface);border:1px solid var(--line2);border-radius:18px;overflow:hidden">
+          <sc-for list="{{ toggles }}" as="g" hint-placeholder-count="4">
+            <div onClick="{{ g.onClick }}" style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid var(--line2);cursor:pointer;min-height:56px">
+              <sc-if value="{{ g.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:19px;height:19px;fill:none;stroke:var(--text2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="{{ g.icon }}"></use></svg></sc-if>
+              <span style="flex:1;font:600 14px Barlow;color:var(--text)">{{ g.label }}</span>
+              <span style="width:46px;height:28px;border-radius:16px;flex:none;padding:3px;display:flex;background: {{ g.trackBg }};justify-content: {{ g.justify }};transition:all .18s ease">
+                <i style="width:22px;height:22px;border-radius:50%;background:#fff;display:block;box-shadow:0 2px 5px rgba(0,0,0,.22)"></i>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;height:50px;border-radius:14px;border:1px solid var(--line);color:var(--bad);font:600 14px Barlow;cursor:pointer" style-hover="background:rgba(214,69,69,.08)"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-out"></use></svg>Sair da conta</div>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsPerfil }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 GESTOR -->
+  <div id="s09" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">09</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Presença diária</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">visão do gestor</span></div>
+    <div data-screen-label="09 Presenca gestor" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:#fff;background:var(--deep)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;background:var(--deep);color:#fff;padding:8px 20px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+          <span style="font:700 21px 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.03em">Presença diária</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:10px;background:rgba(255,255,255,.12);font:600 12px Barlow">Contagem<svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-r"></use></svg></span>
+        </div>
+        <div style="margin-top:6px;font:400 13px Barlow;color:rgba(255,255,255,.6)">Quinta, 12 de setembro · atualizado 07:12</div>
+        <div style="margin-top:18px;display:flex;gap:9px">
+          <sc-for list="{{ statsGestor }}" as="s" hint-placeholder-count="3">
+            <div style="flex:1;padding:13px 12px;border-radius:15px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)">
+              <div style="font:700 27px/1 'Barlow Condensed',Barlow;color: {{ s.ink }}">{{ s.v }}</div>
+              <div style="margin-top:4px;font:600 10px Barlow;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.62)">{{ s.k }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;font:500 11px Barlow;color:rgba(255,255,255,.6);margin-bottom:6px"><span>Escala cumprida</span><span style="color:#fff;font-weight:700">92%</span></div>
+          <div style="height:6px;border-radius:4px;background:rgba(255,255,255,.14);display:flex;overflow:hidden">
+            <i style="width:88%;background:var(--brand);display:block"></i>
+            <i style="width:5%;background:#E8A93A;display:block"></i>
+            <i style="width:7%;background:#D64545;display:block"></i>
+          </div>
+        </div>
+      </div>
+      <div style="flex:none;display:flex;gap:7px;padding:13px 18px 10px">
+        <sc-for list="{{ filtrosGestor }}" as="f" hint-placeholder-count="4">
+          <span onClick="{{ f.onClick }}" style="display:inline-flex;align-items:center;height:34px;padding:0 13px;border-radius:10px;cursor:pointer;white-space:nowrap;font:600 12.5px Barlow;background: {{ f.bg }};color: {{ f.ink }};border:1px solid {{ f.border }}">{{ f.label }}</span>
+        </sc-for>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:0 18px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ equipe }}" as="e" hint-placeholder-count="7">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:15px;background:var(--surface);border:1px solid var(--line2)">
+            <span style="width:38px;height:38px;border-radius:12px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--text2);font:700 13px Barlow">{{ e.f }}</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 14px Barlow;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.n }}</span>
+              <span style="display:block;font:400 11.5px Barlow;color:var(--muted)">{{ e.cargo }}</span>
+            </span>
+            <span style="flex:none;text-align:right">
+              <span style="display:inline-flex;align-items:center;height:23px;padding:0 9px;border-radius:7px;font:600 10.5px Barlow;letter-spacing:.04em;background: {{ e.tagBg }};color: {{ e.tagInk }}">{{ e.status }}</span>
+              <span style="display:block;margin-top:3px;font:600 12px Barlow;color:var(--muted)">{{ e.h }}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;padding:14px 18px 30px;background:var(--surface);border-top:1px solid var(--line)">
+        <button style="width:100%;height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:600 14px Barlow;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-doc"></use></svg>Exportar relatório do dia</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 NOTIFICAÇÕES -->
+  <div id="s10" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">10</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Notificações</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">agrupadas por dia</span></div>
+    <div data-screen-label="10 Notificacoes" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 18px 14px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <a href="#s03" style="width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--text)"><svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-chev-l"></use></svg></a>
+        <span style="flex:1;font:600 17px Barlow;color:var(--text)">Notificações</span>
+        <a href="#s10" style="font:600 13px Barlow;color:var(--brand-ink)">Marcar lidas</a>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:16px 18px 0;display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ notificacoes }}" as="n" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column">
+            <sc-if value="{{ n.header }}" hint-placeholder-val="{{ false }}">
+              <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:6px 4px 8px">{{ n.header }}</div>
+            </sc-if>
+            <sc-if value="{{ n.titulo }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:12px;padding:14px 15px;border-radius:16px;background: {{ n.cardBg }};border:1px solid {{ n.cardLine }}">
+                <span style="width:36px;height:36px;border-radius:11px;flex:none;display:inline-flex;align-items:center;justify-content:center;background: {{ n.iconBg }};color: {{ n.iconInk }}"><sc-if value="{{ n.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="{{ n.icon }}"></use></svg></sc-if></span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:flex;align-items:center;gap:7px">
+                    <span style="font:600 14px Barlow;color:var(--text)">{{ n.titulo }}</span>
+                    <i style="width:7px;height:7px;border-radius:50%;background: {{ n.dot }};display:block;flex:none"></i>
+                  </span>
+                  <span style="display:block;margin-top:3px;font:400 12.5px/1.5 Barlow;color:var(--text2)">{{ n.texto }}</span>
+                  <span style="display:block;margin-top:6px;font:500 11px Barlow;color:var(--muted)">{{ n.hora }}</span>
+                </span>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsInicio }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 ESCALA -->
+  <div id="s11" style="flex:none;width:390px">
+    <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 13px 4px"><span style="font:700 11px Barlow;letter-spacing:.16em;color:var(--brand-ink)">11</span><span style="font:600 16px Barlow;color:var(--canvas-ink)">Escala</span><span style="font:400 14px Barlow;color:var(--canvas-muted)">turno, linha e veículo</span></div>
+    <div data-screen-label="11 Escala" style="width:390px;height:844px;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 26px 64px -22px var(--shadow),0 0 0 9px var(--bezel)">
+      <div style="height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 14px Barlow;color:var(--text)"><span>07:12</span><span style="display:flex;align-items:center;gap:6px"><span style="font:600 11px Barlow;letter-spacing:.06em">5G</span><span style="width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;padding:1.5px;display:flex"><span style="flex:1;background:currentColor;border-radius:1px"></span></span></span></div>
+      <div style="flex:none;padding:6px 18px 16px;background:var(--surface);border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+          <span style="font:700 22px 'Barlow Condensed',Barlow;text-transform:uppercase;letter-spacing:.02em;color:var(--text)">Minha escala</span>
+          <span style="font:500 13px Barlow;color:var(--muted)">Semana 37</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:6px">
+          <sc-for list="{{ semana }}" as="w" hint-placeholder-count="7">
+            <span onClick="{{ w.onClick }}" style="flex:1;padding:9px 0 10px;border-radius:13px;text-align:center;cursor:pointer;background: {{ w.bg }};border:1px solid {{ w.border }}">
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.06em;text-transform:uppercase;color: {{ w.dowInk }}">{{ w.dow }}</span>
+              <span style="display:block;margin-top:2px;font:700 18px/1 'Barlow Condensed',Barlow;color: {{ w.dInk }}">{{ w.d }}</span>
+              <i style="display:block;width:5px;height:5px;border-radius:50%;margin:5px auto 0;background: {{ w.dot }}"></i>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:16px 18px 0;display:flex;flex-direction:column;gap:13px">
+        <div style="background:var(--surface);border:1px solid var(--brand-line);border-radius:20px;padding:18px;box-shadow:0 10px 26px -20px var(--shadow)">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="display:inline-flex;align-items:center;gap:7px;height:27px;padding:0 11px;border-radius:9px;background:var(--brand-soft);font:700 11px Barlow;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-ink)">Turno 1</span>
+            <span style="font:500 12px Barlow;color:var(--muted)">Qui, 12 set</span>
+          </div>
+          <div style="margin-top:14px;display:flex;align-items:flex-end;gap:10px">
+            <span style="font:700 44px/1 'Barlow Condensed',Barlow;color:var(--text)">06:40</span>
+            <span style="flex:1;height:2px;background:var(--line);margin-bottom:9px;display:block"></span>
+            <span style="font:700 44px/1 'Barlow Condensed',Barlow;color:var(--text)">15:20</span>
+          </div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ detalhesEscala }}" as="x" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:11px">
+                <sc-if value="{{ x.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:18px;height:18px;fill:none;stroke:var(--brand-ink);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none"><use href="{{ x.icon }}"></use></svg></sc-if>
+                <span style="flex:none;font:600 10px Barlow;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);width:88px">{{ x.k }}</span>
+                <span style="flex:1;font:600 14px Barlow;color:var(--text);text-align:right">{{ x.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="font:600 11px Barlow;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 4px -4px">Próximos dias</div>
+        <sc-for list="{{ proximosDias }}" as="p" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:16px;background:var(--surface);border:1px solid var(--line2)">
+            <span style="flex:none;width:52px">
+              <span style="display:block;font:600 10px Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">{{ p.dow }}</span>
+              <span style="display:block;font:700 20px/1 'Barlow Condensed',Barlow;color:var(--text)">{{ p.d }}</span>
+            </span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 14px Barlow;color: {{ p.ink }}">{{ p.turno }}</span>
+              <span style="display:block;margin-top:2px;font:400 12px Barlow;color:var(--muted)">{{ p.linha }}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;padding:14px 18px 18px">
+        <button style="width:100%;height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:600 14px Barlow;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer" style-hover="border-color:var(--brand);color:var(--brand-ink)"><svg style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-swap"></use></svg>Solicitar troca de folga</button>
+      </div>
+      <div style="flex:none;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 26px;background:var(--surface);border-top:1px solid var(--line)">
+        <sc-for list="{{ tabsEspelho }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:60px;min-height:46px;cursor:pointer;color: {{ t.color }}">
+            <sc-if value="{{ t.icon }}" hint-placeholder-val="{{ false }}"><svg style="width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="{{ t.icon }}"></use></svg></sc-if>
+            <span style="font:600 10px Barlow;letter-spacing:.03em">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;claro&quot;,&quot;escuro&quot;],&quot;default&quot;:&quot;claro&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Aparência&quot;},&quot;marca&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#0BAF29&quot;,&quot;#08871F&quot;,&quot;#0F1F17&quot;,&quot;#2C6BD6&quot;],&quot;default&quot;:&quot;#0BAF29&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Aparência&quot;},&quot;relogio&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;07:18&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Conteúdo&quot;}}">
+class Component extends DCLogic {
+  state = {
+    pontoStep: 0,
+    filtroEspelho: 'Todos',
+    abaSolic: 'Todas',
+    diaSemana: 3,
+    filtroGestor: 'Todos',
+    prefs: { push: true, lembrete: true, escuro: false, face: true },
+    lembretesOn: [true, true, false, true],
+    diaDisp: 4,
+    blocoAberto: 'realizada',
+    contagem: 57,
+    facial: 3
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => this.setState(s => ({
+      contagem: s.contagem > 0 ? s.contagem - 1 : 57,
+      facial: s.facial > 1 ? s.facial - 1 : 3
+    })), 1000);
+  }
+
+  componentWillUnmount() { clearInterval(this._t); }
+
+  tabs(ativo) {
+    const T = [
+      { key: 'inicio', label: 'Início', icon: '#ic-home' },
+      { key: 'ponto', label: 'Ponto', icon: '#ic-clock' },
+      { key: 'espelho', label: 'Espelho', icon: '#ic-mirror' },
+      { key: 'solic', label: 'Pedidos', icon: '#ic-inbox' },
+      { key: 'perfil', label: 'Perfil', icon: '#ic-user' }
+    ];
+    return T.map(t => ({ ...t, color: t.key === ativo ? 'var(--brand)' : 'var(--muted)' }));
+  }
+
+  chip(on) {
+    return on
+      ? { bg: 'var(--brand)', ink: '#fff', border: 'var(--brand)' }
+      : { bg: 'var(--surface)', ink: 'var(--text2)', border: 'var(--line)' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const ok = 'var(--ok)', warn = 'var(--warn)', bad = 'var(--bad)', muted = 'var(--muted)';
+
+    const PASSOS = [
+      { tipo: 'Marcar ponto', texto: 'Toque para registrar', icon: '#ic-clock', dica: 'Cerca virtual e horário conferidos', bg: 'var(--brand)' },
+      { tipo: 'Marcar ponto', texto: 'Validando local', icon: '#ic-pin', dica: 'Confirmando GPS na Garagem Contagem…', bg: 'var(--brand-ink)' },
+      { tipo: 'Marcar ponto', texto: 'Centralize o rosto', icon: '#ic-face', dica: 'Selfie exigida para esta marcação', bg: '#0E5C22' },
+      { tipo: 'Marcar ponto', texto: 'Ponto registrado', icon: '#ic-check', dica: 'Marcação 12:02 enviada ao RH', bg: 'var(--brand)' }
+    ];
+    const p = PASSOS[s.pontoStep];
+    const est = (i) => {
+      const feito = s.pontoStep > i || s.pontoStep === 3;
+      const atual = s.pontoStep === i;
+      return {
+        border: atual ? 'var(--brand-line)' : 'var(--line2)',
+        chipBg: feito ? 'var(--brand)' : atual ? 'var(--brand-soft)' : 'var(--surface2)',
+        chipInk: feito ? '#fff' : atual ? 'var(--brand-ink)' : 'var(--muted)',
+        statusInk: feito ? 'var(--brand-ink)' : atual ? 'var(--text2)' : 'var(--muted)',
+        status: feito ? 'Concluído' : atual ? 'Em andamento' : 'Aguardando'
+      };
+    };
+    const etapas = [
+      { label: 'Localização na cerca virtual', icon: '#ic-pin', ...est(1) },
+      { label: 'Selfie de identificação', icon: '#ic-face', ...est(2) },
+      { label: 'Envio e sincronização', icon: '#ic-check', ...est(3) }
+    ];
+
+    const diasBase = [
+      { d: '12', dow: 'qui', marks: '07:18 · 12:02 · — · —', tag: 'Em jornada', tagInk: 'var(--brand-ink)', saldo: '—', saldoInk: muted, grupo: 'Todos' },
+      { d: '11', dow: 'qua', marks: '07:12 · 11:58 · 12:59 · 16:46', tag: 'Divergência de saída', tagInk: warn, saldo: '+00:46', saldoInk: 'var(--brand-ink)', grupo: 'Pendências' },
+      { d: '10', dow: 'ter', marks: '06:38 · 11:40 · 12:41 · 15:22', tag: 'Jornada normal', tagInk: muted, saldo: '+00:02', saldoInk: 'var(--brand-ink)', grupo: 'Todos' },
+      { d: '09', dow: 'seg', marks: '07:04 · 11:44 · 12:45 · 15:18', tag: 'Atraso de 24 min', tagInk: warn, saldo: '−00:24', saldoInk: bad, grupo: 'Pendências' },
+      { d: '08', dow: 'dom', marks: 'Folga programada', tag: 'Escala 6x1', tagInk: muted, saldo: '—', saldoInk: muted, grupo: 'Todos' },
+      { d: '07', dow: 'sáb', marks: '06:40 · 11:38 · 12:39 · 15:20', tag: 'Ajuste aprovado pelo RH', tagInk: 'var(--brand-ink)', saldo: '+00:00', saldoInk: muted, grupo: 'Ajustes' },
+      { d: '06', dow: 'sex', marks: '06:41 · 11:42 · 12:43 · 17:05', tag: 'Hora extra autorizada', tagInk: muted, saldo: '+01:45', saldoInk: 'var(--brand-ink)', grupo: 'Todos' }
+    ];
+    const dias = s.filtroEspelho === 'Todos' ? diasBase : diasBase.filter(d => d.grupo === s.filtroEspelho);
+
+    const solicBase = [
+      { id: 4821, tipo: 'Ajuste de ponto', meta: '11/09 · saída 16:46', status: 'Em análise', grupo: 'Em análise', icon: '#ic-swap', iconBg: 'rgba(217,138,0,.12)', iconInk: warn, tagBg: 'rgba(217,138,0,.14)', tagInk: warn, detalhe: 'Solicitado às 07:20 de hoje. Aguardando validação do encarregado da Garagem Contagem.' },
+      { id: 4802, tipo: 'Atestado médico', meta: '05/09 · 1 dia', status: 'Aprovado', grupo: 'Aprovadas', icon: '#ic-doc', iconBg: 'var(--brand-soft)', iconInk: 'var(--brand-ink)', tagBg: 'var(--brand-soft)', tagInk: 'var(--brand-ink)', detalhe: 'Abonado pelo RH em 06/09. Documento anexado e arquivado no prontuário.' },
+      { id: 4790, tipo: 'Troca de folga', meta: '31/08 → 01/09', status: 'Aprovado', grupo: 'Aprovadas', icon: '#ic-mirror', iconBg: 'var(--brand-soft)', iconInk: 'var(--brand-ink)', tagBg: 'var(--brand-soft)', tagInk: 'var(--brand-ink)', detalhe: 'Troca acordada com o motorista Jonas P. Escala já atualizada no app.' },
+      { id: 4771, tipo: 'Abono de falta', meta: '22/08 · 1 dia', status: 'Recusado', grupo: 'Recusadas', icon: '#ic-alert', iconBg: 'rgba(214,69,69,.10)', iconInk: bad, tagBg: 'rgba(214,69,69,.12)', tagInk: bad, detalhe: 'Motivo: justificativa enviada fora do prazo de 48 h previsto no acordo coletivo.' }
+    ];
+    const solicitacoes = (s.abaSolic === 'Todas' ? solicBase : solicBase.filter(x => x.grupo === s.abaSolic))
+      .map(x => ({ ...x, meta: 'Protocolo #' + x.id + ' · ' + x.meta }));
+
+    const equipeBase = [
+      { n: 'Ana Beatriz Lima', f: 'AB', cargo: 'Cobradora · Linha 302', status: 'Presente', h: '06:52', g: 'Presentes' },
+      { n: 'Carlos Eduardo Pinho', f: 'CE', cargo: 'Motorista · Linha 118', status: 'Presente', h: '06:48', g: 'Presentes' },
+      { n: 'Jonas Pereira da Silva', f: 'JP', cargo: 'Motorista · Linha 302', status: 'Atraso', h: '07:09', g: 'Atrasos' },
+      { n: 'Marina Duarte Reis', f: 'MD', cargo: 'Manutenção · Oficina', status: 'Ausente', h: '—', g: 'Ausentes' },
+      { n: 'Ricardo Alves de Souza', f: 'RA', cargo: 'Motorista · Linha 302', status: 'Presente', h: '07:18', g: 'Presentes' },
+      { n: 'Simone Barbosa Cruz', f: 'SB', cargo: 'Cobradora · Linha 118', status: 'Atraso', h: '07:22', g: 'Atrasos' },
+      { n: 'Wellington Faria', f: 'WF', cargo: 'Motorista · Linha 044', status: 'Presente', h: '06:35', g: 'Presentes' }
+    ];
+    const tone = { Presente: ['var(--brand-soft)', 'var(--brand-ink)'], Atraso: ['rgba(217,138,0,.14)', warn], Ausente: ['rgba(214,69,69,.12)', bad] };
+    const equipe = (s.filtroGestor === 'Todos' ? equipeBase : equipeBase.filter(e => e.g === s.filtroGestor))
+      .map(e => ({ ...e, tagBg: tone[e.status][0], tagInk: tone[e.status][1] }));
+
+    const semanaBase = [
+      { dow: 'seg', d: '09', tipo: 'T1' }, { dow: 'ter', d: '10', tipo: 'T1' },
+      { dow: 'qua', d: '11', tipo: 'T1' }, { dow: 'qui', d: '12', tipo: 'T1' },
+      { dow: 'sex', d: '13', tipo: 'T1' }, { dow: 'sáb', d: '14', tipo: 'T2' },
+      { dow: 'dom', d: '15', tipo: 'F' }
+    ];
+    const semana = semanaBase.map((w, i) => {
+      const on = i === s.diaSemana;
+      return {
+        ...w,
+        onClick: () => this.setState({ diaSemana: i }),
+        bg: on ? 'var(--brand)' : 'var(--surface2)',
+        border: on ? 'var(--brand)' : 'var(--line2)',
+        dowInk: on ? 'rgba(255,255,255,.8)' : muted,
+        dInk: on ? '#fff' : 'var(--text)',
+        dot: w.tipo === 'F' ? 'var(--muted)' : on ? '#fff' : 'var(--brand)'
+      };
+    });
+
+    const notificacoes = [
+      { header: 'Hoje' },
+      { icon: '#ic-check', titulo: 'Entrada registrada', texto: 'Marcação de 07:18 confirmada na Garagem Contagem com selfie validada.', hora: 'há 4 min', iconBg: 'var(--brand-soft)', iconInk: 'var(--brand-ink)', cardBg: 'var(--surface)', cardLine: 'var(--brand-line)', dot: 'var(--brand)' },
+      { icon: '#ic-swap', titulo: 'Ajuste #4821 em análise', texto: 'Seu pedido de ajuste do dia 11/09 foi encaminhado ao encarregado.', hora: '07:20', iconBg: 'rgba(217,138,0,.12)', iconInk: warn, cardBg: 'var(--surface)', cardLine: 'var(--line2)', dot: 'var(--brand)' },
+      { header: 'Ontem' },
+      { icon: '#ic-alert', titulo: 'Saída não registrada', texto: 'Detectamos jornada aberta às 16:46. Registre a saída ou solicite ajuste.', hora: '17:30', iconBg: 'rgba(214,69,69,.10)', iconInk: bad, cardBg: 'var(--surface)', cardLine: 'var(--line2)', dot: 'transparent' },
+      { icon: '#ic-mirror', titulo: 'Nova escala publicada', texto: 'Semana 37 disponível: Turno 1 de segunda a sexta, Turno 2 no sábado.', hora: '12:05', iconBg: 'var(--surface2)', iconInk: 'var(--text2)', cardBg: 'var(--surface)', cardLine: 'var(--line2)', dot: 'transparent' },
+      { header: 'Esta semana' },
+      { icon: '#ic-doc', titulo: 'Espelho de agosto fechado', texto: 'Confira e assine o espelho do mês anterior até 15/09.', hora: 'seg, 09/09', iconBg: 'var(--surface2)', iconInk: 'var(--text2)', cardBg: 'var(--surface)', cardLine: 'var(--line2)', dot: 'transparent' }
+    ];
+
+    const prefs = s.prefs;
+    const toggle = (k, label, icon) => ({
+      label, icon,
+      onClick: () => this.setState(st => ({ prefs: { ...st.prefs, [k]: !st.prefs[k] } })),
+      trackBg: prefs[k] ? 'var(--brand)' : 'var(--line)',
+      justify: prefs[k] ? 'flex-end' : 'flex-start'
+    });
+
+    const LEMBRETES = [
+      { hora: '06:38', dias: 'seg, ter, qua, qui, sex', tipo: 'Entrada' },
+      { hora: '11:38', dias: 'seg, ter, qua, qui, sex', tipo: 'Intervalo' },
+      { hora: '12:38', dias: 'seg, ter, qua, qui, sex', tipo: 'Retorno' },
+      { hora: '15:18', dias: 'seg, ter, qua, qui, sex', tipo: 'Saída' }
+    ];
+    const lembretes = LEMBRETES.map((l, i) => {
+      const on = s.lembretesOn[i];
+      return {
+        ...l,
+        onClick: () => this.setState(st => {
+          const n = st.lembretesOn.slice(); n[i] = !n[i]; return { lembretesOn: n };
+        }),
+        border: on ? 'var(--brand-line)' : 'var(--line2)',
+        horaInk: on ? 'var(--brand-ink)' : 'var(--muted)',
+        trackBg: on ? 'var(--brand)' : 'var(--line)',
+        justify: on ? 'flex-end' : 'flex-start'
+      };
+    });
+
+    const ajustes = [
+      { ref: '01/09/2026', status: 'Cancelado', proto: '#4838', quando: '01/09 · 07:02', barra: 'var(--muted)', tagBg: 'var(--surface2)', tagInk: muted, tagLine: 'var(--line)' },
+      { ref: '31/08/2026', status: 'Aprovado', proto: '#4790', quando: '01/09 · 06:50', barra: 'var(--brand)', tagBg: 'var(--brand-soft)', tagInk: 'var(--brand-ink)', tagLine: 'var(--brand-line)' },
+      { ref: '28/08/2026', status: 'Aprovado', proto: '#4761', quando: '29/08 · 08:14', barra: 'var(--brand)', tagBg: 'var(--brand-soft)', tagInk: 'var(--brand-ink)', tagLine: 'var(--brand-line)' },
+      { ref: '27/08/2026', status: 'Em análise', proto: '#4744', quando: '28/08 · 06:58', barra: '#D98A00', tagBg: 'rgba(217,138,0,.12)', tagInk: warn, tagLine: 'rgba(217,138,0,.32)' }
+    ];
+
+    const DISP = [
+      { mes: 'ago', d: '30', dow: 'dom' }, { mes: 'ago', d: '31', dow: 'seg' },
+      { mes: 'set', d: '01', dow: 'ter' }, { mes: 'set', d: '02', dow: 'qua' },
+      { mes: 'set', d: '03', dow: 'qui' }
+    ];
+    const diasDisp = DISP.map((w, i) => {
+      const on = i === s.diaDisp;
+      return {
+        ...w,
+        onClick: () => this.setState({ diaDisp: i }),
+        bg: on ? 'var(--brand)' : 'transparent',
+        border: on ? 'var(--brand)' : 'transparent',
+        dInk: on ? '#fff' : 'var(--text)',
+        subInk: on ? 'rgba(255,255,255,.82)' : muted
+      };
+    });
+
+    const aberto = s.blocoAberto;
+    const bloco = (key, titulo, sub, tempo, tempoInk, periodos, vazio) => ({
+      key, titulo, sub, tempo, tempoInk, periodos, vazio,
+      aberto: aberto === key,
+      chev: aberto === key ? '#ic-chev-u' : '#ic-chev-d',
+      border: aberto === key ? 'var(--brand-line)' : 'var(--line2)',
+      onClick: () => this.setState(st => ({ blocoAberto: st.blocoAberto === key ? null : key }))
+    });
+    const blocosEscala = [
+      bloco('prevista', 'Escala prevista', 'Dia trabalhado · Turno 1', '09:00', 'var(--text)', [
+        { label: 'Jornada', faixa: '06:40 – 15:20', icon: '#ic-clock' },
+        { label: 'Intervalo', faixa: '11:40 – 12:40', icon: '#ic-coffee' },
+        { label: 'Linha prevista', faixa: '302', icon: '#ic-bus' }
+      ], false),
+      bloco('realizada', 'Escala realizada', 'Jornada em andamento', '--:--', 'var(--muted)', [], true)
+    ];
+
+    return {
+      contagem: s.contagem,
+      facial: s.facial,
+      lembretes,
+      ajustes,
+      diasDisp,
+      blocosEscala,
+      registrosAjuste: ['07:04', '12:03', '13:05', '17:02'],
+      tema: this.props.tema ?? 'claro',
+      marca: this.props.marca ?? '#0BAF29',
+      relogio: this.props.relogio ?? '07:18',
+
+      tabsInicio: this.tabs('inicio'),
+      tabsPonto: this.tabs('ponto'),
+      tabsEspelho: this.tabs('espelho'),
+      tabsSolic: this.tabs('solic'),
+      tabsPerfil: this.tabs('perfil'),
+
+      marcacoes: [
+        { label: 'Entrada', time: '07:18' },
+        { label: 'Almoço', time: '12:02' },
+        { label: 'Retorno', time: '13:01' },
+        { label: 'Saída', time: '--:--' }
+      ],
+
+      pontoTipo: p.tipo,
+      botaoTexto: p.texto,
+      botaoIcone: p.icon,
+      botaoBg: p.bg,
+      pontoDica: p.dica,
+      etapasPonto: etapas,
+      avancarPonto: () => this.setState(st => ({ pontoStep: (st.pontoStep + 1) % 4 })),
+
+      resumoMes: [
+        { v: '168h', k: 'Trabalh.', ink: 'var(--text)' },
+        { v: '12:20', k: 'Extras', ink: 'var(--brand-ink)' },
+        { v: '2', k: 'Atrasos', ink: warn },
+        { v: '0', k: 'Faltas', ink: 'var(--text)' }
+      ],
+      filtrosEspelho: ['Todos', 'Pendências', 'Ajustes'].map(l => ({
+        label: l, onClick: () => this.setState({ filtroEspelho: l }), ...this.chip(s.filtroEspelho === l)
+      })),
+      dias,
+
+      timeline: [
+        { t: '07:12', label: 'Entrada', loc: 'Garagem Contagem · 28 m da cerca', src: 'App · GPS + selfie' },
+        { t: '11:58', label: 'Saída para intervalo', loc: 'Terminal Eldorado · 40 m', src: 'App · GPS' },
+        { t: '12:59', label: 'Retorno do intervalo', loc: 'Terminal Eldorado · 36 m', src: 'App · GPS' },
+        { t: '16:46', label: 'Saída', loc: 'Garagem Contagem · 22 m', src: 'App · fora da escala' }
+      ],
+
+      abasSolic: ['Todas', 'Em análise', 'Aprovadas', 'Recusadas'].map(l => ({
+        label: l, onClick: () => this.setState({ abaSolic: l }),
+        ink: s.abaSolic === l ? 'var(--text)' : 'var(--muted)',
+        line: s.abaSolic === l ? 'var(--brand)' : 'transparent'
+      })),
+      solicitacoes,
+
+      itensPerfil: [
+        { label: 'Dados pessoais', sub: 'CPF, CNH categoria D, contato', icon: '#ic-user' },
+        { label: 'Jornada e escala', sub: 'Turno 1 · 6x1 · Garagem Contagem', icon: '#ic-mirror' },
+        { label: 'Documentos e recibos', sub: 'Holerites, espelhos assinados', icon: '#ic-doc' },
+        { label: 'Segurança', sub: 'Senha, Face ID, dispositivos', icon: '#ic-shield' }
+      ],
+      toggles: [
+        toggle('push', 'Notificações push', '#ic-bell'),
+        toggle('lembrete', 'Lembrete de ponto', '#ic-clock'),
+        toggle('escuro', 'Tema escuro', '#ic-moon'),
+        toggle('face', 'Login por Face ID', '#ic-face')
+      ],
+
+      statsGestor: [
+        { v: '128', k: 'Presentes', ink: '#5BE07A' },
+        { v: '7', k: 'Atrasos', ink: '#F0BE5A' },
+        { v: '4', k: 'Ausentes', ink: '#F08A85' }
+      ],
+      filtrosGestor: ['Todos', 'Atrasos', 'Ausentes', 'Presentes'].map(l => ({
+        label: l, onClick: () => this.setState({ filtroGestor: l }), ...this.chip(s.filtroGestor === l)
+      })),
+      equipe,
+
+      notificacoes,
+
+      semana,
+      detalhesEscala: [
+        { k: 'Linha', v: '302 Centro / Eldorado', icon: '#ic-bus' },
+        { k: 'Veículo', v: 'Prefixo 4412', icon: '#ic-bus' },
+        { k: 'Intervalo', v: '11:40 – 12:40', icon: '#ic-coffee' },
+        { k: 'Saída', v: 'Garagem Contagem', icon: '#ic-pin' }
+      ],
+      proximosDias: [
+        { dow: 'sex', d: '13', turno: 'Turno 1 · 06:40–15:20', linha: 'Linha 302 · veículo 4412', ink: 'var(--text)' },
+        { dow: 'sáb', d: '14', turno: 'Turno 2 · 13:10–21:40', linha: 'Linha 118 · veículo 4187', ink: 'var(--text)' },
+        { dow: 'dom', d: '15', turno: 'Folga', linha: 'Escala 6x1', ink: 'var(--muted)' }
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/*
+ * Painel Turin Ponto.
+ *
+ * As cores vêm dos mesmos tokens do app (design/Meu Ponto Turin.dc.html), para
+ * que painel e aplicativo leiam como um produto só. O que muda é a densidade:
+ * o app tem uma tarefa por tela, o painel tem tabelas de 900 linhas.
+ */
+
+:root {
+  /* Marca */
+  --turin: #0baf29;
+  --turin-ink: #08871f;
+  --turin-soft: #e8f7ec;
+  --turin-line: rgba(11, 175, 41, 0.28);
+  /* Verde claro para uso sobre o grafite do rail, onde o verde da marca some */
+  --turin-glow: #5be07a;
+
+  /* Rail escuro: o mesmo grafite esverdeado do splash do app */
+  --graphite: #0b1710;
+  --graphite-2: #132219;
+  --graphite-3: #1c3024;
+
+  /* Texto e superfícies */
+  --ink: #0f1f17;
+  --ink-2: #3a4e44;
+  --muted: #788b80;
+  --line: #e2e8e3;
+  --line-2: #eef2ef;
+  --paper: #f5f7f5;
+  --surface: #ffffff;
+
+  /* Situação */
+  --warn: #d98a00;
+  --warn-soft: #fdf3e2;
+  --bad: #d64545;
+  --bad-soft: #fbecec;
+  --info: #2c6bd6;
+  --info-soft: #eaf1fc;
+}
+
+@theme inline {
+  --color-turin: var(--turin);
+  --color-turin-ink: var(--turin-ink);
+  --color-turin-soft: var(--turin-soft);
+  --color-turin-line: var(--turin-line);
+  --color-turin-glow: var(--turin-glow);
+
+  --color-graphite: var(--graphite);
+  --color-graphite-2: var(--graphite-2);
+  --color-graphite-3: var(--graphite-3);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --font-sans: var(--font-barlow);
+  --font-display: var(--font-barlow-condensed);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-barlow), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Números que se empilham em coluna precisam de largura fixa, senão "11:58" e
+ * "07:04" não alinham e a tabela vira um serrilhado. Vale para todo horário,
+ * duração, matrícula e contagem no painel.
+ */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Rótulo de seção: caixa alta, entrelinha larga. Mesmo padrão do app. */
+.eyebrow {
+  font-family: var(--font-barlow), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Foco visível e consistente — o painel é operado muito no teclado. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--turin);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--turin);
+  color: #fff;
+}
+
+/* Barra de rolagem discreta nas tabelas longas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

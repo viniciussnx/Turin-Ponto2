@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+.expo/
+*.log
+npm-debug.log*
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Selfies e anexos gravados em tempo de execucao. A negacao abaixo preserva
+# design/uploads, que nao e runtime: sao as imagens que o prototipo referencia.
+storage/
+uploads/
+!design/uploads/
+
+# Exportacao zipada de design/ — mesmo conteudo, byte a byte. Fica fora do
+# versionamento para nao duplicar 3,4 MB a cada clone.
+*.zip

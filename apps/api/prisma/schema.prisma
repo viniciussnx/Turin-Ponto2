@@ -1,0 +1,606 @@
+// Turin Ponto - modelo de dados
+//
+// Princípio central: MARCAÇÕES SÃO IMUTÁVEIS.
+// A tabela `Punch` é append-only. Nada de UPDATE ou DELETE nela.
+// Correções existem como `PunchAdjustment`, que ao ser aprovado gera uma NOVA
+// marcação vinculada à original. Isso já atende à Portaria MTP 671/2021
+// (cenário A) mesmo enquanto o sistema roda apenas como controle gerencial
+// (cenário B), evitando reescrita futura.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  OWNER // acesso total, inclusive configuração da empresa
+  ADMIN // administra cadastros, aprova ajustes
+  MANAGER // vê e aprova apenas o seu departamento
+  VIEWER // somente leitura / relatórios
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE // afastado (férias, licença, atestado longo)
+  TERMINATED
+}
+
+/// Tipo INFORMADO na marcação. Nunca é fonte da verdade para o cálculo:
+/// o pareamento real é feito pela ordem cronológica do dia, porque o
+/// funcionário pode errar o botão. Serve para UX e para conferência.
+enum PunchKind {
+  CLOCK_IN // entrada
+  BREAK_OUT // saída para intervalo
+  BREAK_IN // retorno do intervalo
+  CLOCK_OUT // saída
+  UNSPECIFIED
+}
+
+enum PunchSource {
+  MOBILE_APP
+  WEB_PANEL
+  IMPORT // carga de outro sistema / relógio físico
+  ADJUSTMENT // gerada pela aprovação de um ajuste
+}
+
+enum AdjustmentType {
+  ADD // esqueceu de bater, incluir marcação
+  REMOVE // marcação indevida (duplicada), desconsiderar
+  CHANGE_TIME // horário registrado errado
+  JUSTIFY_ABSENCE // abonar ausência do dia
+}
+
+enum AdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum ScheduleType {
+  FIXED // jornada fixa por dia da semana
+  FLEX // carga diária, horário livre
+  SHIFT_12X36 // 12x36
+  FREE // sem jornada definida (apenas registra)
+}
+
+enum ActorType {
+  USER // usuário do painel
+  EMPLOYEE // funcionário pelo app
+  SYSTEM // jobs, sincronização
+}
+
+enum SyncRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Empresa / tenant
+// ---------------------------------------------------------------------------
+
+model Company {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  legalName String?
+  cnpj      String? @unique
+  timezone  String  @default("America/Sao_Paulo")
+  active    Boolean @default(true)
+
+  /// Tolerância por marcação, em minutos (CLT art. 58 §1º: até 5 min por
+  /// marcação e 10 min no total do dia não são computados como extra).
+  toleranceMinutesPerPunch Int @default(5)
+  toleranceMinutesPerDay   Int @default(10)
+
+  /// Exige selfie na marcação pelo app.
+  requireSelfie Boolean @default(true)
+
+  /// Exige coordenadas na marcação pelo app.
+  requireLocation Boolean @default(true)
+
+  /// Bloqueia a marcação fora da cerca geográfica.
+  /// ATENÇÃO: manter `false` no cenário A — a Portaria 671/2021 proíbe o REP-P
+  /// de impedir o registro. Fora da cerca deve apenas SINALIZAR.
+  blockOutsideGeofence Boolean @default(false)
+
+  settings Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  employees   Employee[]
+  schedules   WorkSchedule[]
+  holidays    Holiday[]
+  punches     Punch[]
+  adjustments PunchAdjustment[]
+  geofences   Geofence[]
+  auditLogs   AuditLog[]
+  timesheets  DayTimesheet[]
+  syncRuns    EmployeeSyncRun[]
+  departments Department[]
+
+  @@map("companies")
+}
+
+// ---------------------------------------------------------------------------
+// Usuários do painel web
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  companyId    String    @db.Uuid
+  name         String
+  email        String
+  passwordHash String
+  role         UserRole  @default(VIEWER)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// Departamentos que este usuário gerencia (usado quando role = MANAGER).
+  managedDepartments   Department[]      @relation("DepartmentManagers")
+  reviewedAdjustments  PunchAdjustment[] @relation("AdjustmentReviewer")
+  requestedAdjustments PunchAdjustment[] @relation("AdjustmentUserRequester")
+
+  @@unique([companyId, email])
+  @@index([companyId, active])
+  @@map("users")
+}
+
+model Department {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @db.Uuid
+  name      String
+
+  /// `iddepartamento` no Alterdata.
+  externalId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees Employee[]
+  managers  User[]     @relation("DepartmentManagers")
+
+  @@unique([companyId, name])
+  @@unique([companyId, externalId])
+  @@map("departments")
+}
+
+// ---------------------------------------------------------------------------
+// Funcionários
+// ---------------------------------------------------------------------------
+
+model Employee {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @db.Uuid
+
+  /// `idfuncionario` no Alterdata. É o que amarra
+  /// o registro sincronizado ao funcionário local — nunca use o nome.
+  externalId String?
+
+  registration String // matrícula
+  name         String
+  cpf          String?
+  pis          String?
+  email        String?
+  phone        String?
+  position     String? // cargo
+  departmentId String? @db.Uuid
+
+  admittedAt   DateTime?
+  terminatedAt DateTime?
+  status       EmployeeStatus @default(ACTIVE)
+
+  /// Senha do app (bcrypt). O RH gera uma senha inicial no painel; o app
+  /// obriga a troca no primeiro login. Nula = ainda sem acesso liberado.
+  passwordHash        String?
+  mustChangePassword  Boolean @default(true)
+  /// Foto do crachá, vinda de `wdp.foto_funcionario` no Alterdata.
+  photoUrl            String?
+
+  workScheduleId String? @db.Uuid
+
+  /// Sobrescreve o fuso da empresa (obra/filial em outro estado).
+  timezone String?
+
+  /// Espelho bruto do registro vindo da origem, para auditoria da sincronização.
+  sourcePayload Json?
+  syncedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department   Department?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  workSchedule WorkSchedule? @relation(fields: [workScheduleId], references: [id], onDelete: SetNull)
+
+  devices              Device[]
+  punches              Punch[]
+  adjustments          PunchAdjustment[] @relation("AdjustmentEmployee")
+  requestedAdjustments PunchAdjustment[] @relation("AdjustmentEmployeeRequester")
+  timesheets           DayTimesheet[]
+  geofences            Geofence[]        @relation("EmployeeGeofences")
+
+  @@unique([companyId, registration])
+  @@unique([companyId, externalId])
+  @@unique([companyId, cpf])
+  @@index([companyId, status])
+  @@index([companyId, departmentId])
+  @@map("employees")
+}
+
+model Device {
+  id         String         @id @default(uuid()) @db.Uuid
+  employeeId String         @db.Uuid
+  platform   DevicePlatform
+
+  /// Identificador estável gerado no primeiro boot do app.
+  installationId String @unique
+
+  model      String?
+  osVersion  String?
+  appVersion String?
+  pushToken  String?
+
+  authorized Boolean   @default(true)
+  lastSeenAt DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  punches  Punch[]
+
+  @@index([employeeId, authorized])
+  @@map("devices")
+}
+
+// ---------------------------------------------------------------------------
+// Jornada
+// ---------------------------------------------------------------------------
+
+model WorkSchedule {
+  id        String       @id @default(uuid()) @db.Uuid
+  companyId String       @db.Uuid
+  name      String
+  type      ScheduleType @default(FIXED)
+
+  /// Carga semanal contratada, em minutos (44h = 2640).
+  weeklyMinutes Int @default(2640)
+
+  /// Intervalo mínimo obrigatório, em minutos (CLT: 60 min acima de 6h).
+  minBreakMinutes Int @default(60)
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  days      ScheduleDay[]
+  employees Employee[]
+
+  @@unique([companyId, name])
+  @@map("work_schedules")
+}
+
+/// Um dia da semana dentro de uma jornada. Horários são minutos desde a
+/// meia-noite (ex.: 08:00 = 480). Valores acima de 1440 representam virada
+/// de dia (turno noturno que sai às 02:00 do dia seguinte = 1560).
+model ScheduleDay {
+  id         String @id @default(uuid()) @db.Uuid
+  scheduleId String @db.Uuid
+
+  /// 0 = domingo ... 6 = sábado
+  weekday Int
+
+  /// Nulo = folga.
+  startMinute      Int?
+  breakStartMinute Int?
+  breakEndMinute   Int?
+  endMinute        Int?
+
+  /// Carga esperada no dia, em minutos. Se nulo, deriva de start/end - intervalo.
+  expectedMinutes Int?
+
+  schedule WorkSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, weekday])
+  @@map("schedule_days")
+}
+
+model Holiday {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @db.Uuid
+  date      DateTime @db.Date
+  name      String
+
+  /// Feriado nacional (true) ou municipal/ponto facultativo da empresa (false).
+  national Boolean @default(true)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+  @@map("holidays")
+}
+
+model Geofence {
+  id           String  @id @default(uuid()) @db.Uuid
+  companyId    String  @db.Uuid
+  name         String
+  latitude     Decimal @db.Decimal(10, 7)
+  longitude    Decimal @db.Decimal(10, 7)
+  radiusMeters Int     @default(150)
+  active       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// Vazio = vale para todos os funcionários da empresa.
+  employees Employee[] @relation("EmployeeGeofences")
+
+  @@unique([companyId, name])
+  @@map("geofences")
+}
+
+// ---------------------------------------------------------------------------
+// Marcações (APPEND-ONLY)
+// ---------------------------------------------------------------------------
+
+model Punch {
+  id         String @id @default(uuid()) @db.Uuid
+  companyId  String @db.Uuid
+  employeeId String @db.Uuid
+
+  /// Número Sequencial de Registro: sequencial, único e ininterrupto por
+  /// empresa. Exigido pela Portaria 671/2021 e já adotado aqui.
+  nsr BigInt
+
+  /// Momento real da marcação (relógio do dispositivo, em UTC).
+  punchedAt DateTime
+
+  /// Momento em que o servidor recebeu. Difere de `punchedAt` em marcação
+  /// offline; a diferença é evidência para auditoria.
+  registeredAt DateTime @default(now())
+
+  /// Data de competência no fuso do funcionário. Desnormalizado de propósito:
+  /// todo relatório agrupa por isso, e converter fuso dentro da query é caro.
+  localDate DateTime @db.Date
+
+  kind   PunchKind   @default(UNSPECIFIED)
+  source PunchSource @default(MOBILE_APP)
+
+  deviceId String? @db.Uuid
+
+  latitude       Decimal? @db.Decimal(10, 7)
+  longitude      Decimal? @db.Decimal(10, 7)
+  accuracyMeters Int?
+  address        String?
+
+  /// Chave do objeto no storage (S3/MinIO). A imagem nunca vai no banco.
+  selfieKey String?
+
+  /// Registrada sem conexão e sincronizada depois.
+  offline Boolean @default(false)
+
+  /// Idempotência: id gerado no dispositivo. Impede marcação duplicada quando
+  /// a fila offline reenvia por falha de rede.
+  clientId String?
+
+  /// Fora de qualquer cerca geográfica ativa no momento do registro.
+  outsideGeofence Boolean @default(false)
+
+  /// Encadeamento à prova de adulteração: hash = sha256(previousHash + campos).
+  /// Alterar uma linha antiga quebra a cadeia de todas as seguintes.
+  hash         String
+  previousHash String
+
+  createdAt DateTime @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  device   Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  /// Ajustes que apontam para esta marcação como alvo.
+  targetedByAdjustments PunchAdjustment[] @relation("AdjustmentTarget")
+
+  /// Ajuste que gerou esta marcação (quando source = ADJUSTMENT).
+  resultingAdjustment PunchAdjustment? @relation("AdjustmentResult")
+
+  @@unique([companyId, nsr])
+  @@unique([employeeId, clientId])
+  @@index([companyId, localDate])
+  @@index([employeeId, localDate])
+  @@index([employeeId, punchedAt])
+  @@map("punches")
+}
+
+// ---------------------------------------------------------------------------
+// Ajustes e justificativas
+// ---------------------------------------------------------------------------
+
+model PunchAdjustment {
+  id         String @id @default(uuid()) @db.Uuid
+  companyId  String @db.Uuid
+  employeeId String @db.Uuid
+
+  type   AdjustmentType
+  status AdjustmentStatus @default(PENDING)
+
+  /// Dia de competência a que o ajuste se refere.
+  localDate DateTime @db.Date
+
+  /// Marcação existente afetada (REMOVE / CHANGE_TIME).
+  targetPunchId String? @db.Uuid
+
+  /// Horário pretendido (ADD / CHANGE_TIME), em UTC.
+  proposedAt   DateTime?
+  proposedKind PunchKind?
+
+  reason        String
+  attachmentKey String?
+
+  /// Quem pediu: o próprio funcionário (app) ou um usuário do painel.
+  requestedByEmployeeId String? @db.Uuid
+  requestedByUserId     String? @db.Uuid
+
+  reviewedByUserId String?   @db.Uuid
+  reviewedAt       DateTime?
+  reviewNote       String?
+
+  /// Marcação criada quando o ajuste foi aprovado.
+  resultingPunchId String? @unique @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee @relation("AdjustmentEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  targetPunch    Punch? @relation("AdjustmentTarget", fields: [targetPunchId], references: [id], onDelete: SetNull)
+  resultingPunch Punch? @relation("AdjustmentResult", fields: [resultingPunchId], references: [id], onDelete: SetNull)
+
+  requestedByEmployee Employee? @relation("AdjustmentEmployeeRequester", fields: [requestedByEmployeeId], references: [id], onDelete: SetNull)
+  requestedByUser     User?     @relation("AdjustmentUserRequester", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  reviewedBy          User?     @relation("AdjustmentReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([employeeId, localDate])
+  @@map("punch_adjustments")
+}
+
+// ---------------------------------------------------------------------------
+// Espelho de ponto calculado (cache de apuração)
+// ---------------------------------------------------------------------------
+
+/// Resultado da apuração de um dia. É CACHE, nunca fonte da verdade: pode ser
+/// recalculado do zero a partir de `punches` + jornada a qualquer momento.
+model DayTimesheet {
+  id         String   @id @default(uuid()) @db.Uuid
+  companyId  String   @db.Uuid
+  employeeId String   @db.Uuid
+  date       DateTime @db.Date
+
+  expectedMinutes Int @default(0)
+  workedMinutes   Int @default(0)
+  breakMinutes    Int @default(0)
+
+  /// Saldo do dia (trabalhado - esperado), já aplicada a tolerância.
+  balanceMinutes  Int @default(0)
+  overtimeMinutes Int @default(0)
+  nightMinutes    Int @default(0) // adicional noturno (22h-05h)
+  absenceMinutes  Int @default(0)
+
+  isHoliday Boolean @default(false)
+  isRestDay Boolean @default(false)
+
+  /// Número ímpar de marcações, intervalo abaixo do mínimo, etc.
+  hasInconsistency Boolean @default(false)
+  inconsistencies  Json    @default("[]")
+
+  punchCount Int      @default(0)
+  computedAt DateTime @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([companyId, date])
+  @@index([companyId, hasInconsistency])
+  @@map("day_timesheets")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoria e sincronização
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  companyId String    @db.Uuid
+  actorType ActorType
+  actorId   String?
+  actorName String?
+
+  action   String // "punch.create", "adjustment.approve", "employee.sync"
+  entity   String
+  entityId String?
+
+  before Json?
+  after  Json?
+
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, entity, entityId])
+  @@map("audit_logs")
+}
+
+/// Sessão de refresh token. Permite revogar o acesso de um aparelho específico.
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  subjectType ActorType
+  subjectId   String    @db.Uuid
+  tokenHash   String    @unique
+  deviceId    String?   @db.Uuid
+  ip          String?
+  userAgent   String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([subjectType, subjectId])
+  @@map("sessions")
+}
+
+/// Execução do job que traz funcionários do Alterdata via proxy.
+model EmployeeSyncRun {
+  id        String        @id @default(uuid()) @db.Uuid
+  companyId String        @db.Uuid
+  source    String // "alterdata-proxy" | "csv" | "manual"
+  status    SyncRunStatus @default(RUNNING)
+
+  created Int @default(0)
+  updated Int @default(0)
+  skipped Int @default(0)
+  failed  Int @default(0)
+
+  errorMessage String?
+  details      Json    @default("[]")
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, startedAt])
+  @@map("employee_sync_runs")
+}

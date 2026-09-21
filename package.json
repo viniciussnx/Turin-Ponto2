@@ -1,0 +1,32 @@
+{
+  "name": "turin-ponto",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Sistema de marcacao de ponto - app mobile, painel web e API",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "api:dev": "npm run start:dev --workspace @turin/api",
+    "api:build": "npm run build --workspace @turin/api",
+    "db:generate": "npm run prisma:generate --workspace @turin/api",
+    "db:migrate": "npm run prisma:migrate --workspace @turin/api",
+    "db:deploy": "npm run prisma:deploy --workspace @turin/api",
+    "db:seed": "npm run prisma:seed --workspace @turin/api",
+    "db:studio": "npm run prisma:studio --workspace @turin/api",
+    "shared:build": "npm run build --workspace @turin/shared",
+    "app": "npm run start --workspace @turin/mobile",
+    "web": "npm run dev --workspace @turin/web"
+  },
+  "allowScripts": {
+    "prisma@6.19.3": true,
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
+  }
+}
