@@ -92,6 +92,7 @@ celular físico sem configuração. Para apontar para outro servidor, defina
 | `npm run app` | Expo dev server (Expo Go ou build de desenvolvimento) |
 | `npm run web` | Painel administrativo em http://localhost:3000 |
 | `npm run db:migrate` | Cria/aplica migração de desenvolvimento |
+| `npm run db:deploy` | Aplica as migrações existentes, sem criar nenhuma (produção) |
 | `npm run db:seed` | Popula dados iniciais (idempotente) |
 | `npm run db:studio` | Prisma Studio, para inspecionar o banco |
 | `npm test --workspace @turin/api` | Testes |
