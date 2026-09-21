@@ -5,7 +5,10 @@ import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 
 @Module({
-  imports: [JwtModule.register({})],
+  // global: o JwtAuthGuard e um APP_GUARD, registrado no AppModule. Sem isto
+  // o JwtService nao existe naquele contexto e o Nest nao sobe — falha de
+  // injecao em runtime, que o tsc nao pega.
+  imports: [JwtModule.register({ global: true })],
   controllers: [AuthController],
   providers: [AuthService, TokenService],
   exports: [AuthService, TokenService],
