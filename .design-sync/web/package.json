@@ -1,0 +1,11 @@
+{
+  "name": "@turin/mobile-ds",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Componentes reais do app Meu Ponto Turin (apps/mobile) compilados para web via react-native-web, só para o Claude Design.",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "react-native-web": "0.21.2"
+  }
+}

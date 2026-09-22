@@ -28,3 +28,12 @@ uploads/
 # Exportacao zipada de design/ — mesmo conteudo, byte a byte. Fica fora do
 # versionamento para nao duplicar 3,4 MB a cada clone.
 *.zip
+
+# design-sync (Claude Design)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.design-sync/web/node_modules/
+.design-sync/web/dist/

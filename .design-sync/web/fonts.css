@@ -1,0 +1,42 @@
+/* As mesmas famílias que apps/mobile/src/theme/useAppFonts.ts carrega, com os
+   mesmos nomes (fonts.* em tokens.ts). Arquivos vêm de @expo-google-fonts. */
+@font-face {
+  font-family: "Inter_400Regular";
+  src: url("../../node_modules/@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "Inter_500Medium";
+  src: url("../../node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "Inter_600SemiBold";
+  src: url("../../node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "Inter_700Bold";
+  src: url("../../node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "InterTight_600SemiBold";
+  src: url("../../node_modules/@expo-google-fonts/inter-tight/600SemiBold/InterTight_600SemiBold.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "InterTight_700Bold";
+  src: url("../../node_modules/@expo-google-fonts/inter-tight/700Bold/InterTight_700Bold.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrainsMono_500Medium";
+  src: url("../../node_modules/@expo-google-fonts/jetbrains-mono/500Medium/JetBrainsMono_500Medium.ttf") format("truetype");
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrainsMono_700Bold";
+  src: url("../../node_modules/@expo-google-fonts/jetbrains-mono/700Bold/JetBrainsMono_700Bold.ttf") format("truetype");
+  font-display: block;
+}

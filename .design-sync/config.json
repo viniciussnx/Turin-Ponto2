@@ -1,0 +1,119 @@
+{
+  "projectId": "885eeac5-2adc-499e-a898-82306ab73780",
+  "shape": "package",
+  "pkg": "@turin/mobile-ds",
+  "globalName": "TurinPonto",
+  "entry": ".design-sync/web/dist/index.mjs",
+  "buildCmd": "node .design-sync/web/build.mjs",
+  "extraFonts": [
+    "./fonts.css"
+  ],
+  "provider": {
+    "component": "TurinProvider"
+  },
+  "componentSrcMap": {
+    "View": null,
+    "Text": null,
+    "ScrollView": null,
+    "Pressable": null,
+    "Image": null,
+    "TextInput": null,
+    "Switch": null,
+    "ActivityIndicator": null,
+    "StyleSheet": null,
+    "Platform": null,
+    "LinearGradient": null,
+    "SafeAreaView": null,
+    "ThemeProvider": null,
+    "TurinProvider": null
+  },
+  "docsDir": "../docs",
+  "dtsPropsFor": {
+    "PrimaryButton": "label: string; onPress: () => void; loading?: boolean; disabled?: boolean; /** Ícone antes do rótulo (ex.: <Icon name=\"check\" color=\"#FFFFFF\" />). */ icon?: React.ReactNode; /** Estilo React Native (ViewStyle): objeto como { marginTop: 8, flexDirection: 'row' }. */ style?: Record<string, unknown>; /** Ação destrutiva (sair, cancelar pedido): fundo `bad`. */ destrutivo?: boolean; /** Vibração ao tocar (só no aparelho). Padrão true. */ haptico?: boolean;",
+    "SecondaryButton": "label: string; onPress: () => void; disabled?: boolean; /** Estilo React Native (ViewStyle): objeto como { marginTop: 8, flexDirection: 'row' }. */ style?: Record<string, unknown>;",
+    "Field": "label: string; /** Ícone à esquerda: <PersonIcon/> na matrícula, <LockIcon/> na senha. */ leading?: React.ReactNode; /** Mascara o valor e mostra o olho de revelar. */ secure?: boolean; /** Mensagem de erro abaixo do campo; a borda fica `bad`. */ error?: string | null; value?: string; defaultValue?: string; onChangeText?: (text: string) => void; placeholder?: string; keyboardType?: \"default\" | \"number-pad\" | \"numeric\" | \"email-address\" | \"phone-pad\" | \"decimal-pad\"; autoCapitalize?: \"none\" | \"sentences\" | \"words\" | \"characters\"; autoComplete?: string; returnKeyType?: \"done\" | \"go\" | \"next\" | \"search\" | \"send\"; onSubmitEditing?: () => void; editable?: boolean; maxLength?: number; multiline?: boolean; numberOfLines?: number; accessibilityLabel?: string; /** Estilo do TextInput interno (TextStyle). */ style?: Record<string, unknown>;",
+    "Card": "children: React.ReactNode; /** Estilo React Native (ViewStyle): objeto como { marginTop: 8, flexDirection: 'row' }. */ style?: Record<string, unknown>; /** Borda `brandLine` para item ativo ou pendência. */ highlighted?: boolean;",
+    "SectionLabel": "children: string; /** Estilo React Native (ViewStyle): objeto como { marginTop: 8, flexDirection: 'row' }. */ style?: Record<string, unknown>;",
+    "ChipFilters": "options: readonly string[]; value: string; onChange: (value: string) => void;",
+    "UnderlineTabs": "options: readonly string[]; value: string; onChange: (value: string) => void;",
+    "Icon": "name: \"home\" | \"clock\" | \"mirror\" | \"inbox\" | \"user\" | \"pin\" | \"face\" | \"check\" | \"swap\" | \"doc\" | \"calendar\" | \"alert\" | \"bell\" | \"moon\" | \"shield\" | \"coffee\" | \"bus\" | \"chevron-down\" | \"chevron-up\" | \"chevron-right\" | \"chevron-left\" | \"plus\" | \"camera\" | \"lock\" | \"logout\"; /** Cor do traço — use um token (`c.muted`, `c.brandInk`) ou \"#FFFFFF\" sobre o degradê. */ color: string; /** Padrão 22. */ size?: number; /** Padrão 1.8. */ strokeWidth?: number;",
+    "ListRow": "icon: \"home\" | \"clock\" | \"mirror\" | \"inbox\" | \"user\" | \"pin\" | \"face\" | \"check\" | \"swap\" | \"doc\" | \"calendar\" | \"alert\" | \"bell\" | \"moon\" | \"shield\" | \"coffee\" | \"bus\" | \"chevron-down\" | \"chevron-up\" | \"chevron-right\" | \"chevron-left\" | \"plus\" | \"camera\" | \"lock\" | \"logout\"; title: string; subtitle?: string; onPress?: () => void; /** Substitui o chevron (ex.: <Toggle/>, <Tag/>, ou <View/> para nada). */ right?: React.ReactNode; iconTone?: \"brand\" | \"warn\" | \"bad\" | \"neutral\";",
+    "EmptyState": "icon: \"home\" | \"clock\" | \"mirror\" | \"inbox\" | \"user\" | \"pin\" | \"face\" | \"check\" | \"swap\" | \"doc\" | \"calendar\" | \"alert\" | \"bell\" | \"moon\" | \"shield\" | \"coffee\" | \"bus\" | \"chevron-down\" | \"chevron-up\" | \"chevron-right\" | \"chevron-left\" | \"plus\" | \"camera\" | \"lock\" | \"logout\"; title: string; detail?: string;",
+    "PermissionPrimer": "icone: \"home\" | \"clock\" | \"mirror\" | \"inbox\" | \"user\" | \"pin\" | \"face\" | \"check\" | \"swap\" | \"doc\" | \"calendar\" | \"alert\" | \"bell\" | \"moon\" | \"shield\" | \"coffee\" | \"bus\" | \"chevron-down\" | \"chevron-up\" | \"chevron-right\" | \"chevron-left\" | \"plus\" | \"camera\" | \"lock\" | \"logout\"; titulo: string; /** Uma frase concreta: por que o app precisa disso. */ porque: string; /** Permissão já negada: a ação vira \"Abrir os Ajustes\". */ negada?: boolean; aoPermitir: () => void; aoPular: () => void; /** Padrão \"Agora não\". */ rotuloPular?: string;"
+  },
+  "overrides": {
+    "Screen": {
+      "cardMode": "column",
+      "viewport": "420x900"
+    },
+    "BrandHeader": {
+      "cardMode": "column",
+      "viewport": "420x900"
+    },
+    "PermissionPrimer": {
+      "cardMode": "column",
+      "viewport": "420x900"
+    },
+    "PrimaryButton": {
+      "cardMode": "column"
+    },
+    "SecondaryButton": {
+      "cardMode": "column"
+    },
+    "EixoRegua": {
+      "cardMode": "column"
+    },
+    "ReguaDia": {
+      "cardMode": "column"
+    },
+    "StatTile": {
+      "cardMode": "column"
+    },
+    "Checkbox": {
+      "cardMode": "column"
+    },
+    "DateTimeField": {
+      "cardMode": "column"
+    },
+    "Field": {
+      "cardMode": "column"
+    },
+    "Toggle": {
+      "cardMode": "column"
+    },
+    "Card": {
+      "cardMode": "column"
+    },
+    "SectionLabel": {
+      "cardMode": "column"
+    },
+    "Icon": {
+      "cardMode": "column"
+    },
+    "LockIcon": {
+      "cardMode": "column"
+    },
+    "PersonIcon": {
+      "cardMode": "column"
+    },
+    "TurinLogo": {
+      "cardMode": "column"
+    },
+    "ChipFilters": {
+      "cardMode": "column"
+    },
+    "ListRow": {
+      "cardMode": "column"
+    },
+    "UnderlineTabs": {
+      "cardMode": "column"
+    },
+    "EmptyState": {
+      "cardMode": "column"
+    },
+    "ProvisionalNotice": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}
