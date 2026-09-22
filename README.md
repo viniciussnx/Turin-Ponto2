@@ -36,9 +36,17 @@ docs/
 docker compose up -d postgres
 ```
 
-**Sem Docker:** crie um banco gratuito no [Neon](https://neon.tech) ou
+**Sem Docker, na nuvem:** crie um banco gratuito no [Neon](https://neon.tech) ou
 [Supabase](https://supabase.com) e use a connection string deles no passo seguinte.
 Não é preciso instalar nada.
+
+**Sem Docker, local:** baixe os binários do PostgreSQL 16 (zip, sem instalador) em
+[get.enterprisedb.com](https://www.enterprisedb.com/download-postgresql-binaries) e
+rode `initdb` você mesmo. Uma armadilha do Windows: **o `initdb` falha se o caminho
+tiver acento** — ele aborta com `invalid byte sequence for encoding "UTF8"`. Um
+diretório como `C:\Users\<nome com acento>\...` não serve, e o nome curto 8.3
+não resolve, porque o Windows expande para o caminho longo. Use algo como
+`C:\Users\Public\pg`.
 
 ### 2. Dependências e configuração
 
