@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { brandGradient, fonts, radius, spacing } from '../theme/tokens';
+import { brandGradient, fonts, radius, spacing, MIN_TOQUE } from '../theme/tokens';
 import { Icon, type IconName } from './Icon';
 
 /// Cabeçalho verde em degradê — o mesmo das telas 02, 03 e 09 do protótipo.
@@ -55,16 +55,21 @@ export function BrandHeader({
         {right ?? <View style={{ width: 26 }} />}
       </View>
 
+      {/* Sem `toUpperCase`: o caixa alta em títulos é o tique de template, e
+          em português ele ainda atrapalha a leitura de nomes próprios longos
+          como "MARIA APARECIDA DOS SANTOS". `accessibilityRole="header"` dá a
+          navegação por cabeçalho no VoiceOver. */}
       <Text
+        accessibilityRole="header"
+        numberOfLines={2}
         style={{
           marginTop: spacing.md,
           color: '#FFFFFF',
           fontFamily: fonts.display,
           fontSize: 28,
-          letterSpacing: 0.4,
         }}
       >
-        {title.toUpperCase()}
+        {title}
       </Text>
       {subtitle ? (
         <Text
@@ -152,22 +157,32 @@ export function Card({
   );
 }
 
-/// Rótulo em caixa alta com espaçamento largo — o padrão de seção do protótipo.
+/*
+ * Rótulo de seção.
+ *
+ * Era caixa alta de 11 pt com 1,4 de entrelinha, na cor `muted` — três
+ * problemas de uma vez: 11 pt é o piso absoluto do HIG e o versalete o faz
+ * parecer menor; `muted` reprovava em contraste; e o versalete espaçado era
+ * o tique visual que fazia cada tela do app parecer a mesma tela de template.
+ *
+ * Agora é 13 pt, peso semibold, sentence case, em `text2`. A hierarquia vem
+ * do peso e da cor — que é como o iOS faz.
+ */
 export function SectionLabel({ children, style }: { children: string; style?: ViewStyle }) {
   const { c } = useTheme();
   return (
     <Text
+      accessibilityRole="header"
       style={[
         {
-          color: c.muted,
+          color: c.text2,
           fontFamily: fonts.semibold,
-          fontSize: 11,
-          letterSpacing: 1.4,
+          fontSize: 13,
         },
         style as never,
       ]}
     >
-      {children.toUpperCase()}
+      {children}
     </Text>
   );
 }
@@ -199,12 +214,15 @@ export function ChipFilters<T extends string>({
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             style={{
-              backgroundColor: active ? c.brand : c.surface,
+              backgroundColor: active ? c.brandAction : c.surface,
               borderWidth: 1,
-              borderColor: active ? c.brand : c.line,
+              borderColor: active ? c.brandAction : c.line,
               borderRadius: radius.pill,
               paddingHorizontal: spacing.lg,
-              paddingVertical: 7,
+              // 7 pt de respiro dava uma pílula de ~30 pt de altura. O piso do
+              // HIG é 44, e estes filtros ficam lado a lado num carrossel.
+              minHeight: MIN_TOQUE,
+              justifyContent: 'center',
             }}
           >
             <Text
@@ -248,9 +266,11 @@ export function UnderlineTabs<T extends string>({
             style={{
               flex: 1,
               alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: MIN_TOQUE,
               paddingVertical: spacing.md,
               borderBottomWidth: 2,
-              borderBottomColor: active ? c.brand : 'transparent',
+              borderBottomColor: active ? c.brandAction : 'transparent',
             }}
           >
             <Text
@@ -272,11 +292,15 @@ export function UnderlineTabs<T extends string>({
 /// Pílula de status: "Em jornada", "Aprovado", "Em análise"…
 export function Tag({ text, tone }: { text: string; tone: 'ok' | 'warn' | 'bad' | 'neutral' }) {
   const { c } = useTheme();
+  // Os fundos de warn e bad eram rgba() cravados no código e não mudavam no
+  // tema escuro — "Aprovado" e "Recusado" ficavam ilegíveis à noite, que são
+  // justamente os dois estados que o motorista mais precisa ler. Agora saem
+  // dos tokens, que têm valor próprio em cada tema.
   const map = {
-    ok: { bg: c.brandSoft, ink: c.brandInk },
-    warn: { bg: 'rgba(217,138,0,0.14)', ink: c.warn },
-    bad: { bg: 'rgba(214,69,69,0.12)', ink: c.bad },
-    neutral: { bg: c.surface2, ink: c.muted },
+    ok: { bg: c.okSoft, ink: c.ok },
+    warn: { bg: c.warnSoft, ink: c.warn },
+    bad: { bg: c.badSoft, ink: c.bad },
+    neutral: { bg: c.surface2, ink: c.text2 },
   }[tone];
 
   return (
@@ -366,30 +390,43 @@ export function ListRow({
   );
 }
 
-/// Interruptor das preferências (telas 08 e 14).
-export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+/*
+ * Interruptor das preferências.
+ *
+ * Usa o `Switch` nativo em vez da pílula desenhada à mão. A pílula anterior
+ * separava ligado de desligado só pela cor do trilho, e o botão branco sobre
+ * o trilho cinza dava 1,24:1 — praticamente invisível. Pior: quem tem
+ * deuteranopia (~6% dos homens, e a frota da Turin é majoritariamente
+ * masculina) não distinguia verde de cinza.
+ *
+ * `color.md › Supporting accessibility` é direto: *"Avoid relying solely on
+ * color to differentiate between objects, indicate interactivity, or
+ * communicate essential information."* O `Switch` do sistema já traz a
+ * separação por posição, o contorno, o comportamento de arrastar, o alvo de
+ * toque correto e o papel de acessibilidade — e acompanha as preferências de
+ * contraste e movimento do aparelho sem código nosso.
+ */
+export function Toggle({
+  value,
+  onChange,
+  label,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  /// Rótulo acessível. Sem ele o interruptor é anunciado só como "ativado".
+  label?: string;
+}) {
   const { c } = useTheme();
 
   return (
-    <Pressable
-      onPress={() => onChange(!value)}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
-      hitSlop={8}
-      style={{
-        width: 46,
-        height: 27,
-        borderRadius: radius.pill,
-        backgroundColor: value ? c.brand : c.line,
-        padding: 3,
-        justifyContent: 'center',
-        alignItems: value ? 'flex-end' : 'flex-start',
-      }}
-    >
-      <View
-        style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: c.surface }}
-      />
-    </Pressable>
+    <Switch
+      value={value}
+      onValueChange={onChange}
+      accessibilityLabel={label}
+      trackColor={{ false: c.line, true: c.brandAction }}
+      thumbColor={c.surface}
+      ios_backgroundColor={c.line}
+    />
   );
 }
 
@@ -413,7 +450,7 @@ export function StatTile({
 
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ color: ink, fontFamily: fonts.display, fontSize: 24 }}>{value}</Text>
+      <Text style={{ color: ink, fontFamily: fonts.mono, fontSize: 24 }}>{value}</Text>
       <Text style={{ color: c.muted, fontFamily: fonts.medium, fontSize: 12 }}>{label}</Text>
     </View>
   );

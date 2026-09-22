@@ -56,7 +56,7 @@ export default function AdjustmentDetailScreen() {
   if (loading && !adjustment) {
     return (
       <Screen title="Solicitação">
-        <ActivityIndicator color={c.brand} style={{ marginTop: spacing.xxl }} />
+        <ActivityIndicator color={c.brandAction} style={{ marginTop: spacing.xxl }} />
       </Screen>
     );
   }
@@ -175,8 +175,11 @@ export default function AdjustmentDetailScreen() {
             >
               Aguardando análise do RH. Você recebe um aviso quando houver resposta.
             </Text>
+            {/* Cancelar um pedido é destrutivo e irreversível: precisa ler como
+                tal, e não com o mesmo verde da ação de confirmar. */}
             <PrimaryButton
-              label="CANCELAR PEDIDO"
+              label="Cancelar pedido"
+              destrutivo
               onPress={confirmCancel}
               loading={cancelling}
             />

@@ -18,7 +18,7 @@ export function TurinMark({ className }: { className?: string }) {
         y="26"
         fill="currentColor"
         style={{
-          font: "700 28px var(--font-barlow-condensed), sans-serif",
+          font: "700 28px var(--font-inter-tight), sans-serif",
           letterSpacing: "0.15em",
         }}
       >

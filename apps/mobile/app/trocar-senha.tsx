@@ -91,7 +91,11 @@ export default function ChangePasswordScreen() {
             onChangeText={setCurrent}
             leading={<LockIcon color={c.muted} />}
             secure
-            autoCapitalize="characters"
+            // A senha provisória vem em maiúsculas, mas forçar o teclado em
+            // caixa alta num campo mascarado esconde o que foi digitado E
+            // quebra quem cola a senha recebida por outro canal.
+            autoCapitalize="none"
+            autoCorrect={false}
             returnKeyType="next"
             onSubmitEditing={() => nextRef.current?.focus()}
             editable={!loading}

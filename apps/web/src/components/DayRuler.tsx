@@ -43,13 +43,13 @@ export function DayRuler({
         <div className="flex items-center gap-5 text-[13px]">
           <span className="text-muted">
             Primeira{" "}
-            <strong className="tnum font-display text-[17px] font-700 text-ink">
+            <strong className="tnum font-display text-[17px] font-bold text-ink">
               {firstAt ?? "--:--"}
             </strong>
           </span>
           <span className="text-muted">
             Última{" "}
-            <strong className="tnum font-display text-[17px] font-700 text-ink">
+            <strong className="tnum font-display text-[17px] font-bold text-ink">
               {lastAt ?? "--:--"}
             </strong>
           </span>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useDebounced } from "@/lib/useDebounced";
 import { Guard } from "@/components/Guard";
 import { Shell } from "@/components/Shell";
 import { Icon } from "@/components/Icon";
@@ -45,10 +46,21 @@ function TimesheetContent() {
     params.get("colaborador"),
   );
   const [search, setSearch] = useState("");
-  const [from, setFrom] = useState(firstDayOfMonth());
-  const [to, setTo] = useState(lastDayOfMonth());
+  // Uma consulta por palavra digitada, nao por tecla.
+  const buscaAtrasada = useDebounced(search);
+  /*
+   * O período também vem por URL.
+   *
+   * A tarefa diária do DP é: ver a pendência de hoje → abrir o espelho DAQUELE
+   * colaborador NAQUELE dia. Antes, o link do dashboard levava ao espelho vazio
+   * e o analista refazia a busca à mão — a tarefa mais frequente do painel era
+   * a única sem caminho. Com `de`/`ate` na URL, a tela abre já posicionada, e
+   * o link continua compartilhável e funcionando no Voltar do navegador.
+   */
+  const [from, setFrom] = useState(params.get("de") ?? firstDayOfMonth());
+  const [to, setTo] = useState(params.get("ate") ?? lastDayOfMonth());
 
-  const employees = useEmployees({ search: search || undefined, status: "ACTIVE", pageSize: 12 });
+  const employees = useEmployees({ search: buscaAtrasada || undefined, status: "ACTIVE", pageSize: 12 });
   const timesheet = useTimesheet(employeeId, from, to);
 
   return (
@@ -91,7 +103,7 @@ function TimesheetContent() {
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14px] font-600 text-ink">
+                      <p className="truncate text-[14px] font-semibold text-ink">
                         {employee.name}
                       </p>
                       <p className="tnum truncate text-[12px] text-muted">
@@ -154,7 +166,7 @@ function TimesheetContent() {
               <Card>
                 <div className="mb-4">
                   <p className="eyebrow">Colaborador</p>
-                  <p className="font-display text-[24px] font-700 text-ink">
+                  <p className="font-display text-[24px] font-bold text-ink">
                     {timesheet.data.employee.name}
                   </p>
                   <p className="tnum text-[13px] text-muted">
@@ -217,7 +229,7 @@ function DayRow({ day }: { day: TimesheetDay }) {
   return (
     <tr className={`hover:bg-paper ${isOff ? "bg-paper/60" : ""}`}>
       <Td>
-        <span className="tnum font-display text-[17px] font-700 text-ink">
+        <span className="tnum font-display text-[17px] font-bold text-ink">
           {day.date.slice(8, 10)}
         </span>
         <span className="ml-1.5 text-[12px] text-muted">{WEEKDAYS[day.weekday]}</span>
@@ -243,7 +255,7 @@ function DayRow({ day }: { day: TimesheetDay }) {
       </Td>
       <Td
         align="right"
-        className={`tnum font-600 ${
+        className={`tnum font-semibold ${
           day.balanceMinutes > 0
             ? "text-turin-ink"
             : day.balanceMinutes < 0

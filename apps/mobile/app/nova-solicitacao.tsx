@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { fonts, radius, spacing } from '../src/theme/tokens';
 import { PrimaryButton } from '../src/components/ui';
 import { Card, Screen, SectionLabel } from '../src/components/layout';
+import { DateTimeField } from '../src/components/DateTimeField';
 import {
   TYPE_LABEL,
   createAdjustment,
-  formatDate,
   type AdjustmentType,
 } from '../src/api/adjustments';
 import { DAY_SLOTS } from '../src/punch/useToday';
@@ -24,29 +24,46 @@ export default function NewAdjustmentScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ data?: string }>();
 
-  const days = useMemo(() => lastDays(14), []);
-  const [date, setDate] = useState(params.data ?? days[days.length - 1].iso);
+  /*
+   * Data e hora saem de seletores nativos, não de uma régua de 14 dias e de
+   * um campo mascarado. A régua tornava impossível pedir ajuste sobre um dia
+   * fora da janela — um pedido sobre o dia 3 aberto no dia 20 não tinha como
+   * ser feito.
+   *
+   * O estado guarda `Date`; o ISO só é montado na hora de enviar.
+   */
+  const [quando, setQuando] = useState<Date>(() =>
+    params.data ? new Date(`${params.data}T12:00:00`) : new Date(),
+  );
+  const [horario, setHorario] = useState<Date>(() => new Date());
   const [type, setType] = useState<AdjustmentType>('ADD');
-  const [time, setTime] = useState('');
   const [kind, setKind] = useState<string>('CLOCK_IN');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
   const needsTime = type === 'ADD' || type === 'CHANGE_TIME';
-  const validTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-  const canSubmit = reason.trim().length >= 5 && (!needsTime || validTime) && !saving;
+  const canSubmit = reason.trim().length >= 5 && !saving;
+
+  // O ajuste é sempre sobre um dia que já passou; o seletor não deixa escolher
+  // o futuro, em vez de aceitar e o servidor recusar depois.
+  const hoje = useMemo(() => new Date(), []);
+
+  const dataIso = useMemo(() => isoLocal(quando), [quando]);
 
   async function submit() {
     if (!canSubmit) return;
     setSaving(true);
     try {
+      // O instante combina o DIA escolhido no primeiro seletor com a HORA do
+      // segundo — os dois seletores editam campos diferentes do mesmo momento.
+      const instante = new Date(quando);
+      instante.setHours(horario.getHours(), horario.getMinutes(), 0, 0);
+
       await createAdjustment({
         type,
-        localDate: date,
+        localDate: dataIso,
         reason: reason.trim(),
-        // O horário vai como instante completo: o servidor precisa do momento,
-        // não só do relógio. Montamos a partir do dia escolhido, no fuso local.
-        proposedAt: needsTime ? new Date(`${date}T${time}:00`).toISOString() : undefined,
+        proposedAt: needsTime ? instante.toISOString() : undefined,
         proposedKind: needsTime ? kind : undefined,
       });
       router.back();
@@ -60,65 +77,15 @@ export default function NewAdjustmentScreen() {
   return (
     <Screen title="Nova solicitação" subtitle="O RH analisa e responde pelo app">
       <View style={{ gap: spacing.lg }}>
-        <View style={{ gap: spacing.sm }}>
-          <SectionLabel>Dia de referência</SectionLabel>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}
-          >
-            {days.map((day) => {
-              const active = day.iso === date;
-              return (
-                <Pressable
-                  key={day.iso}
-                  onPress={() => setDate(day.iso)}
-                  style={{
-                    width: 56,
-                    paddingVertical: spacing.md,
-                    alignItems: 'center',
-                    borderRadius: radius.md,
-                    backgroundColor: active ? c.brand : c.surface,
-                    borderWidth: 1,
-                    borderColor: active ? c.brand : c.line,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: active ? 'rgba(255,255,255,0.82)' : c.muted,
-                      fontFamily: fonts.medium,
-                      fontSize: 11,
-                    }}
-                  >
-                    {day.weekday}
-                  </Text>
-                  <Text
-                    style={{
-                      color: active ? '#FFFFFF' : c.text,
-                      fontFamily: fonts.display,
-                      fontSize: 20,
-                    }}
-                  >
-                    {day.day}
-                  </Text>
-                  <Text
-                    style={{
-                      color: active ? 'rgba(255,255,255,0.82)' : c.muted,
-                      fontFamily: fonts.regular,
-                      fontSize: 10,
-                    }}
-                  >
-                    {day.month}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 13 }}>
-            Selecionado: {formatDate(date)}
-          </Text>
-        </View>
-
+        {/* Seletor nativo: alcança qualquer dia passado, traz o calendário,
+            o formato local e o leitor de tela sem código nosso. */}
+        <DateTimeField
+          label="Dia de referência"
+          modo="date"
+          valor={quando}
+          onChange={setQuando}
+          maximo={hoje}
+        />
         <View style={{ gap: spacing.sm }}>
           <SectionLabel>Tipo de pedido</SectionLabel>
           {TYPES.map((option) => (
@@ -132,7 +99,7 @@ export default function NewAdjustmentScreen() {
                 backgroundColor: c.surface,
                 borderRadius: radius.md,
                 borderWidth: 1.5,
-                borderColor: type === option ? c.brand : c.line,
+                borderColor: type === option ? c.brandAction : c.line,
                 padding: spacing.md,
               }}
             >
@@ -142,7 +109,7 @@ export default function NewAdjustmentScreen() {
                   height: 20,
                   borderRadius: 10,
                   borderWidth: 2,
-                  borderColor: type === option ? c.brand : c.line,
+                  borderColor: type === option ? c.brandAction : c.line,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -162,27 +129,14 @@ export default function NewAdjustmentScreen() {
 
         {needsTime ? (
           <Card style={{ gap: spacing.md }}>
-            <SectionLabel>Horário correto</SectionLabel>
-            <TextInput
-              value={time}
-              onChangeText={(value) => setTime(maskTime(value))}
-              placeholder="00:00"
-              placeholderTextColor={c.muted}
-              keyboardType="number-pad"
-              maxLength={5}
-              style={{
-                color: c.text,
-                fontFamily: fonts.display,
-                fontSize: 34,
-                letterSpacing: 1,
-                paddingVertical: spacing.sm,
-              }}
+            {/* Seletor nativo no lugar do campo mascarado: não há estado
+                inválido possível, e o formato de 24 h vem do sistema. */}
+            <DateTimeField
+              label="Horário correto"
+              modo="time"
+              valor={horario}
+              onChange={setHorario}
             />
-            {time.length === 5 && !validTime ? (
-              <Text style={{ color: c.bad, fontFamily: fonts.medium, fontSize: 13 }}>
-                Horário inválido
-              </Text>
-            ) : null}
 
             <SectionLabel>Qual marcação</SectionLabel>
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
@@ -197,9 +151,9 @@ export default function NewAdjustmentScreen() {
                       alignItems: 'center',
                       paddingVertical: spacing.sm,
                       borderRadius: radius.sm,
-                      backgroundColor: active ? c.brand : c.surface2,
+                      backgroundColor: active ? c.brandAction : c.surface2,
                       borderWidth: 1,
-                      borderColor: active ? c.brand : c.line,
+                      borderColor: active ? c.brandAction : c.line,
                     }}
                   >
                     <Text
@@ -260,38 +214,16 @@ export default function NewAdjustmentScreen() {
   );
 }
 
-/// Régua dos últimos N dias, do mais antigo para hoje.
-function lastDays(count: number) {
-  const result: { iso: string; day: string; weekday: string; month: string }[] = [];
-  const weekdays = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-  const months = [
-    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-    'jul', 'ago', 'set', 'out', 'nov', 'dez',
-  ];
 
-  for (let offset = count - 1; offset >= 0; offset -= 1) {
-    const date = new Date();
-    date.setDate(date.getDate() - offset);
-    result.push({
-      iso: toIsoDay(date),
-      day: String(date.getDate()).padStart(2, '0'),
-      weekday: weekdays[date.getDay()],
-      month: months[date.getMonth()],
-    });
-  }
-  return result;
-}
 
-/// Data local em ISO. `toISOString()` converteria para UTC e, à noite, jogaria
-/// o dia para o seguinte.
-function toIsoDay(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
 
-function maskTime(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+/// Data em ISO local (YYYY-MM-DD), sem passar por UTC.
+///
+/// `toISOString().slice(0,10)` erraria o dia para quem está a oeste de
+/// Greenwich em qualquer horário depois das 21h — o que num app de ponto
+/// significa atribuir a marcação ao dia seguinte.
+function isoLocal(valor: Date): string {
+  const mes = String(valor.getMonth() + 1).padStart(2, '0');
+  const dia = String(valor.getDate()).padStart(2, '0');
+  return `${valor.getFullYear()}-${mes}-${dia}`;
 }

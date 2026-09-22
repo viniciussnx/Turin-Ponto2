@@ -143,7 +143,7 @@ export default function LoginScreen() {
               label="Manter conectado"
             />
             <Pressable onPress={showForgotPassword} hitSlop={8}>
-              <Text style={{ color: c.brand, fontFamily: fonts.semibold, fontSize: 14 }}>
+              <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 14 }}>
                 Esqueci a senha
               </Text>
             </Pressable>

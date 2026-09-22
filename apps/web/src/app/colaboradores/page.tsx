@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useDebounced } from "@/lib/useDebounced";
 import { Guard } from "@/components/Guard";
 import { Shell } from "@/components/Shell";
 import { Icon } from "@/components/Icon";
@@ -29,12 +31,14 @@ import {
 
 export default function EmployeesPage() {
   const [search, setSearch] = useState("");
+  // Uma consulta por palavra digitada, nao por tecla.
+  const buscaAtrasada = useDebounced(search);
   const [status, setStatus] = useState("ACTIVE");
   const [onlyPending, setOnlyPending] = useState(false);
   const [page, setPage] = useState(1);
 
   const query = useEmployees({
-    search: search || undefined,
+    search: buscaAtrasada || undefined,
     status: status || undefined,
     pendingActivation: onlyPending || undefined,
     page,
@@ -49,7 +53,7 @@ export default function EmployeesPage() {
         actions={
           <Link
             href="/sincronizacao"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[14px] font-600 text-ink-2 hover:bg-line-2"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[14px] font-semibold text-ink-2 hover:bg-line-2"
           >
             <Icon name="sync" className="h-4 w-4" />
             Sincronizar
@@ -184,6 +188,7 @@ export default function EmployeesPage() {
 
 function EmployeeRow({ employee }: { employee: Employee }) {
   const reset = useResetAppAccess();
+  const [confirmar, setConfirmar] = useState(false);
 
   return (
     <>
@@ -191,7 +196,7 @@ function EmployeeRow({ employee }: { employee: Employee }) {
         <Td>
           <Link
             href={`/espelho?colaborador=${employee.id}`}
-            className="font-600 text-ink hover:text-turin-ink"
+            className="font-semibold text-ink hover:text-turin-ink"
           >
             {employee.name}
           </Link>
@@ -235,10 +240,35 @@ function EmployeeRow({ employee }: { employee: Employee }) {
             size="sm"
             variant="outline"
             loading={reset.isPending}
-            onClick={() => reset.mutate(employee.id)}
+            onClick={() => {
+              // Liberar acesso a quem ainda não tem é inócuo e vai direto.
+              // Gerar nova senha para quem já usa o app derruba a sessão do
+              // aparelho — isso passa pela confirmação.
+              if (employee.appActivated) setConfirmar(true);
+              else reset.mutate(employee.id);
+            }}
           >
             {employee.appActivated ? "Nova senha" : "Liberar acesso"}
           </Button>
+
+          {/* `position: fixed` escapa do layout da tabela, então o diálogo
+              pode morar na própria célula da ação que o dispara. */}
+          <ConfirmDialog
+            aberto={confirmar}
+            titulo={`Gerar nova senha para ${employee.name}?`}
+            consequencia={
+              employee._count.devices > 0
+                ? `Os ${employee._count.devices} aparelho${employee._count.devices > 1 ? "s" : ""} de ${employee.name} serão desconectados na hora. Se estiver em rota, ${employee.name} não consegue bater o ponto até receber a senha nova e entrar de novo.`
+                : `${employee.name} será desconectado do app e precisará entrar de novo com a senha nova.`
+            }
+            confirmar="Gerar nova senha"
+            carregando={reset.isPending}
+            onCancelar={() => setConfirmar(false)}
+            onConfirmar={() => {
+              setConfirmar(false);
+              reset.mutate(employee.id);
+            }}
+          />
         </Td>
       </tr>
 
@@ -250,7 +280,7 @@ function EmployeeRow({ employee }: { employee: Employee }) {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="eyebrow">Senha inicial de {employee.name}</p>
-                <p className="tnum font-display text-[32px] font-700 tracking-[0.12em] text-turin-ink">
+                <p className="tnum font-display text-[32px] font-bold tracking-[0.12em] text-turin-ink">
                   {reset.data.initialPassword}
                 </p>
                 <p className="mt-1 text-[13px] text-ink-2">
@@ -274,10 +304,13 @@ function EmployeeRow({ employee }: { employee: Employee }) {
       {reset.isError ? (
         <tr>
           <td colSpan={8} className="border-b border-line-2 px-4 py-2">
-            <p className="text-[13px] text-bad">{(reset.error as Error).message}</p>
+            <p role="alert" className="text-[13px] text-bad">
+              {(reset.error as Error).message}
+            </p>
           </td>
         </tr>
       ) : null}
+
     </>
   );
 }

@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Company, Employee, Punch, PunchKind, PunchSource } from '@prisma/client';
+import { Company, Employee, Prisma, Punch, PunchKind, PunchSource } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit/audit.service';
 import { Actor } from '../../common/types/actor';
@@ -13,7 +13,7 @@ import { distanceInMeters } from '../../common/utils/geo';
 import { formatLocalDateTime, toLocalDate } from '../../common/utils/date';
 import { PunchChainService } from './punch-chain.service';
 import { CreatePunchDto } from './dto/create-punch.dto';
-import { ListPunchesDto } from './dto/list-punches.dto';
+import { ListPunchesDto, PunchSort, SortDir } from './dto/list-punches.dto';
 
 /// Tolerância para relógio adiantado no aparelho. Acima disso a marcação é
 /// recusada — aceitar horário futuro abriria caminho para fraude trivial.
@@ -175,7 +175,7 @@ export class PunchesService {
     const [items, total] = await Promise.all([
       this.prisma.punch.findMany({
         where,
-        orderBy: [{ localDate: 'desc' }, { punchedAt: 'desc' }],
+        orderBy: orderFor(query.sort, query.dir),
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
@@ -283,5 +283,34 @@ export class PunchesService {
       outsideGeofence: punch.outsideGeofence,
       duplicated,
     };
+  }
+}
+
+/*
+ * Traduz a coluna pedida pelo painel para o `orderBy` do Prisma.
+ *
+ * O desempate por `nsr` não é decoração: sem ele, duas marcações no mesmo
+ * segundo podem trocar de posição entre uma página e outra, e a mesma linha
+ * apareceria duas vezes ou sumiria na paginação. O NSR é único e sequencial,
+ * então serve de critério estável.
+ */
+function orderFor(
+  sort: PunchSort | undefined,
+  dir: SortDir | undefined,
+): Prisma.PunchOrderByWithRelationInput[] {
+  const d = dir ?? 'desc';
+
+  switch (sort) {
+    case PunchSort.Nsr:
+      return [{ nsr: d }];
+    case PunchSort.Employee:
+      return [{ employee: { name: d } }, { nsr: 'desc' }];
+    case PunchSort.Kind:
+      return [{ kind: d }, { punchedAt: 'desc' }, { nsr: 'desc' }];
+    case PunchSort.PunchedAt:
+      return [{ punchedAt: d }, { nsr: d }];
+    default:
+      // Padrão de sempre: o dia mais recente primeiro.
+      return [{ localDate: 'desc' }, { punchedAt: 'desc' }, { nsr: 'desc' }];
   }
 }

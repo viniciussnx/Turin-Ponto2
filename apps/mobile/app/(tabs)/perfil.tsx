@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { fonts, radius, spacing } from '../../src/theme/tokens';
+import { fonts, radius, spacing, MIN_TOQUE, ALTURA_ABAS } from '../../src/theme/tokens';
 import { Icon } from '../../src/components/Icon';
 import {
   BrandHeader,
@@ -43,12 +43,12 @@ export default function PerfilScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#0BAF29', fontFamily: fonts.display, fontSize: 28 }}>
+            <Text style={{ color: c.brandInk, fontFamily: fonts.display, fontSize: 28 }}>
               {initials(employee?.name ?? '')}
             </Text>
           </View>
           <Text style={{ color: '#FFFFFF', fontFamily: fonts.display, fontSize: 24 }}>
-            {(employee?.name ?? '').toUpperCase()}
+            {employee?.name ?? ''}
           </Text>
           <Text
             style={{
@@ -68,7 +68,7 @@ export default function PerfilScreen() {
         style={{ flex: 1, marginTop: -spacing.xxl }}
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl,
+          paddingBottom: insets.bottom + ALTURA_ABAS + spacing.lg,
           gap: spacing.lg,
         }}
       >
@@ -106,17 +106,26 @@ export default function PerfilScreen() {
         <Card style={{ gap: spacing.md }}>
           <SectionLabel>Preferências</SectionLabel>
 
+          {/* Os dois primeiros gravam a preferência mas nada os consome ainda:
+              não há registro de push nem agendamento de notificação local no
+              app. Ficam desligados e marcados "Em breve" — prometer um aviso
+              que não chega, num app de ponto, faz o motorista confiar num
+              lembrete que não existe. */}
           <PrefRow
             icon="bell"
             label="Notificações push"
             value={prefs.push}
             onChange={(value) => void update({ push: value })}
+            hint="Em breve"
+            disabled
           />
           <PrefRow
             icon="clock"
             label="Lembrete de ponto"
             value={prefs.reminders}
             onChange={(value) => void update({ reminders: value })}
+            hint="Em breve"
+            disabled
           />
           <PrefRow
             icon="moon"
@@ -191,6 +200,7 @@ function PrefRow({
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.md,
+        minHeight: MIN_TOQUE,
         opacity: disabled ? 0.5 : 1,
       }}
     >
@@ -212,7 +222,11 @@ function PrefRow({
           <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 12 }}>{hint}</Text>
         ) : null}
       </View>
-      <Toggle value={value} onChange={disabled ? () => undefined : onChange} />
+      <Toggle
+        value={value}
+        label={hint ? `${label}. ${hint}` : label}
+        onChange={disabled ? () => undefined : onChange}
+      />
     </View>
   );
 }

@@ -36,6 +36,19 @@ export default function TodayPage() {
     [punches.data],
   );
 
+  /*
+   * O contador acima conta pessoas distintas dentro de UMA página de 200
+   * marcações. Com ~206 ativos batendo quatro vezes por dia, a página enche
+   * por volta da quinquagésima pessoa: a partir daí o número para de crescer
+   * e passa a mentir para baixo — todo dia, depois das 8h.
+   *
+   * Enquanto não existe endpoint de agregação (`GET /punches/summary`), a
+   * saída honesta não é esconder: é dizer que o número é um piso. Um "≥ 50"
+   * é informação; um "50" que na verdade são 140 é um erro de operação.
+   */
+  const punchTotal = punches.data?.total ?? 0;
+  const punchesTruncadas = punchTotal > (punches.data?.items.length ?? 0);
+
   const activeTotal = active.data?.total ?? 0;
 
   // Se a API não respondeu, os contadores NÃO podem mostrar zero: num painel de
@@ -63,7 +76,7 @@ export default function TodayPage() {
         actions={
           <Link
             href="/marcacoes"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[14px] font-600 text-ink-2 hover:bg-line-2"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[14px] font-semibold text-ink-2 hover:bg-line-2"
           >
             <Icon name="clock" className="h-4 w-4" />
             Ver marcações
@@ -92,11 +105,17 @@ export default function TodayPage() {
                 value={
                   punches.isLoading || active.isLoading
                     ? "—"
-                    : dash(`${presentCount}/${activeTotal}`)
+                    : dash(
+                        `${punchesTruncadas ? "≥" : ""}${presentCount}/${activeTotal}`,
+                      )
                 }
                 label="Bateram ponto"
                 tone={unavailable ? "neutral" : "ok"}
-                hint="pessoas distintas"
+                hint={
+                  punchesTruncadas
+                    ? "no mínimo — contagem parcial"
+                    : "pessoas distintas"
+                }
               />
               <Stat
                 value={issues.isLoading ? "—" : dash(String(issues.data?.length ?? 0))}
@@ -109,6 +128,18 @@ export default function TodayPage() {
                 tone={!unavailable && (pending.data?.length ?? 0) > 0 ? "info" : "neutral"}
               />
             </div>
+
+            {punchesTruncadas ? (
+              <p className="mt-4 rounded-lg bg-warn-soft px-4 py-2.5 text-[12px] leading-relaxed text-warn">
+                O dia já passou de {punchTotal} marcações e a tela lê as 200 mais
+                recentes, então “bateram ponto” é um piso, não o total. Para o
+                número fechado, abra{" "}
+                <Link href={`/marcacoes?de=${day}&ate=${day}`} className="underline">
+                  Marcações
+                </Link>
+                .
+              </p>
+            ) : null}
           </Card>
 
           <div className="grid gap-5 lg:grid-cols-2">
@@ -116,14 +147,14 @@ export default function TodayPage() {
             <Card padded={false}>
               <header className="flex items-center justify-between border-b border-line px-5 py-4">
                 <div>
-                  <h2 className="font-display text-[19px] font-700 text-ink">
+                  <h2 className="font-display text-[19px] font-bold text-ink">
                     Ajustes aguardando
                   </h2>
                   <p className="text-[13px] text-muted">Pedidos abertos pelo app</p>
                 </div>
                 <Link
                   href="/ajustes"
-                  className="text-[13px] font-600 text-turin hover:text-turin-ink"
+                  className="text-[13px] font-semibold text-turin hover:text-turin-ink"
                 >
                   Ver todos
                 </Link>
@@ -158,7 +189,7 @@ export default function TodayPage() {
                           <Icon name="swap" className="h-4 w-4 text-warn" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[14px] font-600 text-ink">
+                          <p className="truncate text-[14px] font-semibold text-ink">
                             {item.employee.name}
                           </p>
                           <p className="tnum truncate text-[12px] text-muted">
@@ -177,14 +208,14 @@ export default function TodayPage() {
             <Card padded={false}>
               <header className="flex items-center justify-between border-b border-line px-5 py-4">
                 <div>
-                  <h2 className="font-display text-[19px] font-700 text-ink">
+                  <h2 className="font-display text-[19px] font-bold text-ink">
                     Jornadas com pendência
                   </h2>
                   <p className="text-[13px] text-muted">Apuradas hoje</p>
                 </div>
                 <Link
-                  href="/espelho"
-                  className="text-[13px] font-600 text-turin hover:text-turin-ink"
+                  href={`/espelho?de=${day}&ate=${day}`}
+                  className="text-[13px] font-semibold text-turin hover:text-turin-ink"
                 >
                   Espelho
                 </Link>
@@ -210,21 +241,34 @@ export default function TodayPage() {
               ) : (
                 <ul className="divide-y divide-line-2">
                   {issues.data?.slice(0, 6).map((item) => (
-                    <li key={item.id} className="flex items-center gap-3 px-5 py-3">
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bad-soft">
-                        <Icon name="alert" className="h-4 w-4 text-bad" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] font-600 text-ink">
-                          {item.employee.name}
-                        </p>
-                        <p className="truncate text-[12px] text-muted">
-                          {item.inconsistencies[0]?.message ?? "Pendência na jornada"}
-                        </p>
-                      </div>
-                      <span className="tnum text-[13px] text-muted">
-                        {item.punchCount} marc.
-                      </span>
+                    // Cada pendência leva ao espelho DAQUELE colaborador
+                    // NAQUELE dia. Era a tarefa mais frequente do painel e a
+                    // única sem caminho: o link ia para o espelho vazio.
+                    <li key={item.id}>
+                      <Link
+                        href={`/espelho?colaborador=${item.employee.id}&de=${item.date}&ate=${item.date}`}
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-paper"
+                      >
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bad-soft">
+                          <Icon name="alert" className="h-4 w-4 text-bad" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14px] font-semibold text-ink">
+                            {item.employee.name}
+                          </p>
+                          <p className="truncate text-[12px] text-muted">
+                            {item.inconsistencies[0]?.message ?? "Pendência na jornada"}
+                          </p>
+                        </div>
+                        <span className="tnum text-[13px] text-muted">
+                          {item.punchCount} marc.
+                        </span>
+                        <Icon
+                          name="chevron-right"
+                          className="h-4 w-4 shrink-0 text-muted"
+                          aria-hidden="true"
+                        />
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -240,7 +284,7 @@ export default function TodayPage() {
                   <Icon name="key" className="h-5 w-5 text-info" />
                 </div>
                 <div>
-                  <p className="text-[14px] font-600 text-ink">
+                  <p className="text-[14px] font-semibold text-ink">
                     {notActivated.data?.total} colaboradores ainda sem acesso ao app
                   </p>
                   <p className="text-[13px] text-muted">
@@ -250,7 +294,7 @@ export default function TodayPage() {
               </div>
               <Link
                 href="/colaboradores?pendentes=1"
-                className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-[14px] font-600 text-ink-2 hover:bg-line-2"
+                className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-[14px] font-semibold text-ink-2 hover:bg-line-2"
               >
                 Ver lista
               </Link>

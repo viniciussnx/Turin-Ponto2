@@ -49,7 +49,7 @@ export default function LoginPage() {
           <TurinMark className="h-6 w-auto text-white" />
 
           <div className="max-w-md">
-            <h2 className="font-display text-[46px] leading-[1.05] font-700 text-white">
+            <h2 className="font-display text-[46px] leading-[1.05] font-bold text-white">
               O PONTO DE QUEM
               <br />
               MOVE A CIDADE
@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
 
           <p className="eyebrow mt-8 lg:mt-0">Painel administrativo</p>
-          <h1 className="mt-1 font-display text-[38px] leading-none font-700 text-ink">
+          <h1 className="mt-1 font-display text-[38px] leading-none font-bold text-ink">
             ENTRAR
           </h1>
           <p className="mt-3 text-[14px] text-muted">

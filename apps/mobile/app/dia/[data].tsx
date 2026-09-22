@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { fonts, radius, spacing } from '../../src/theme/tokens';
+import { fonts, spacing } from '../../src/theme/tokens';
 import { Icon } from '../../src/components/Icon';
 import { PrimaryButton } from '../../src/components/ui';
-import { Card, EmptyState, Screen, SectionLabel, Tag } from '../../src/components/layout';
+import { Card, EmptyState, Screen, SectionLabel } from '../../src/components/layout';
+import { EixoRegua, ReguaDia } from '../../src/components/ReguaDia';
 import { dayTag, useTimesheet, weekdayLabel, type TimesheetDay } from '../../src/api/timesheet';
 import { labelForKind } from '../../src/punch/useToday';
 import type { PunchKind } from '../../src/punch/queue';
@@ -29,7 +30,7 @@ export default function DayDetailScreen() {
       subtitle={day ? summary(day) : undefined}
     >
       {loading && !day ? (
-        <ActivityIndicator color={c.brand} style={{ marginTop: spacing.xxl }} />
+        <ActivityIndicator color={c.brandAction} style={{ marginTop: spacing.xxl }} />
       ) : !day ? (
         <EmptyState icon="alert" title="Dia não encontrado" />
       ) : (
@@ -83,6 +84,13 @@ export default function DayDetailScreen() {
               </Card>
             ) : (
               <Card>
+                {/* No detalhe há largura para a régua com o eixo: ela dá a
+                    forma do dia antes da leitura item a item. */}
+                <View style={{ marginBottom: spacing.lg }}>
+                  <ReguaDia marcacoes={day.punches.map((p) => p.time)} altura={10} />
+                  <EixoRegua />
+                </View>
+
                 {day.punches.map((punch, index) => (
                   <TimelineRow
                     key={punch.id}
@@ -102,7 +110,7 @@ export default function DayDetailScreen() {
           </View>
 
           <PrimaryButton
-            label="SOLICITAR AJUSTE"
+            label="Solicitar ajuste"
             onPress={() => router.push(`/nova-solicitacao?data=${isoDate}`)}
           />
         </View>
@@ -135,7 +143,7 @@ function TimelineRow({
             width: 11,
             height: 11,
             borderRadius: 6,
-            backgroundColor: warn ? c.warn : c.brand,
+            backgroundColor: warn ? c.warn : c.brandAction,
             marginTop: 5,
           }}
         />
@@ -144,7 +152,7 @@ function TimelineRow({
 
       <View style={{ flex: 1, paddingBottom: last ? 0 : spacing.lg }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
-          <Text style={{ color: c.text, fontFamily: fonts.display, fontSize: 19 }}>{time}</Text>
+          <Text style={{ color: c.text, fontFamily: fonts.mono, fontSize: 19 }}>{time}</Text>
           <Text style={{ color: c.text2, fontFamily: fonts.semibold, fontSize: 14 }}>
             {label}
           </Text>
@@ -171,7 +179,7 @@ function Metric({
 
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ color: ink, fontFamily: fonts.display, fontSize: 22 }}>{value}</Text>
+      <Text style={{ color: ink, fontFamily: fonts.mono, fontSize: 22 }}>{value}</Text>
       <Text style={{ color: c.muted, fontFamily: fonts.medium, fontSize: 12 }}>{label}</Text>
     </View>
   );

@@ -11,18 +11,22 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "br.com.turintransportes.ponto",
+      "icon": {
+        "light": "./assets/icon.png",
+        "dark": "./assets/icon-dark.png",
+        "tinted": "./assets/icon-tinted.png"
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas no momento do registro de ponto, para confirmar que você está na garagem.",
-        "NSCameraUsageDescription": "A câmera é usada para a selfie que confirma quem está registrando o ponto.",
+        "NSCameraUsageDescription": "A câmera tira uma foto de conferência no momento do registro. A foto fica no aparelho.",
         "NSFaceIDUsageDescription": "Use o Face ID para entrar no app sem digitar a senha."
       }
     },
     "android": {
       "package": "br.com.turintransportes.ponto",
       "adaptiveIcon": {
-        "backgroundColor": "#0BAF29",
+        "backgroundColor": "#0B711F",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -42,11 +46,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#07130D",
+          "backgroundColor": "#0B711F",
           "image": "./assets/splash-icon.png",
-          "imageWidth": 180,
+          "imageWidth": 200,
           "resizeMode": "contain",
-          "dark": { "backgroundColor": "#050C08" }
+          "dark": {
+            "backgroundColor": "#062812"
+          }
         }
       ],
       [
@@ -58,9 +64,10 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "A câmera é usada para a selfie que confirma quem está registrando o ponto."
+          "cameraPermission": "A câmera tira uma foto de conferência no momento do registro. A foto fica no aparelho."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

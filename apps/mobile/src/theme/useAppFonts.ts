@@ -1,26 +1,34 @@
 import {
-  Barlow_400Regular,
-  Barlow_500Medium,
-  Barlow_600SemiBold,
-  Barlow_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
   useFonts,
-} from '@expo-google-fonts/barlow';
+} from '@expo-google-fonts/inter';
 import {
-  BarlowCondensed_600SemiBold,
-  BarlowCondensed_700Bold,
-} from '@expo-google-fonts/barlow-condensed';
+  InterTight_600SemiBold,
+  InterTight_700Bold,
+} from '@expo-google-fonts/inter-tight';
+import {
+  JetBrainsMono_500Medium,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono';
 
-/// Barlow + Barlow Condensed sao a tipografia do protótipo. Sem elas a tela
-/// cai na fonte do sistema e o desenho perde a identidade, entao a raiz do app
-/// segura o splash ate `loaded` virar true.
+/// Inter + Inter Tight + JetBrains Mono: as mesmas três famílias do painel de
+/// férias da Turin, para que os três sistemas leiam como um produto só.
+///
+/// A raiz do app segura o splash até `loaded` virar true — sem isso a primeira
+/// tela pisca na fonte do sistema e depois salta.
 export function useAppFonts(): boolean {
   const [loaded] = useFonts({
-    Barlow_400Regular,
-    Barlow_500Medium,
-    Barlow_600SemiBold,
-    Barlow_700Bold,
-    BarlowCondensed_600SemiBold,
-    BarlowCondensed_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    InterTight_600SemiBold,
+    InterTight_700Bold,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_700Bold,
   });
   return loaded;
 }

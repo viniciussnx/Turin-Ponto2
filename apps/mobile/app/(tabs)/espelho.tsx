@@ -3,8 +3,9 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } 
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { fonts, radius, spacing } from '../../src/theme/tokens';
+import { fonts, radius, spacing, ALTURA_ABAS } from '../../src/theme/tokens';
 import { Icon } from '../../src/components/Icon';
+import { ReguaDia } from '../../src/components/ReguaDia';
 import {
   BrandHeader,
   Card,
@@ -57,11 +58,11 @@ export default function EspelhoScreen() {
         style={{ flex: 1, marginTop: -spacing.xxl }}
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl,
+          paddingBottom: insets.bottom + ALTURA_ABAS + spacing.lg,
           gap: spacing.lg,
         }}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={c.brand} />
+          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={c.brandAction} />
         }
       >
         <Card>
@@ -95,7 +96,7 @@ export default function EspelhoScreen() {
         ) : null}
 
         {loading && !data ? (
-          <ActivityIndicator color={c.brand} style={{ marginTop: spacing.xxl }} />
+          <ActivityIndicator color={c.brandAction} style={{ marginTop: spacing.xxl }} />
         ) : days.length === 0 ? (
           <EmptyState
             icon="mirror"
@@ -195,10 +196,16 @@ function DayRow({ day, onPress }: { day: TimesheetDay; onPress: () => void }) {
         </Text>
       </View>
 
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text style={{ color: c.text2, fontFamily: fonts.medium, fontSize: 13 }}>
+      <View style={{ flex: 1, gap: 6 }}>
+        <Text style={{ color: c.text2, fontFamily: fonts.mono, fontSize: 13 }}>
           {marksLine(day)}
         </Text>
+
+        {/* A forma do dia, antes dos números. Ver o comentário de `ReguaDia`. */}
+        {day.punches.length > 0 ? (
+          <ReguaDia marcacoes={day.punches.map((p) => p.time)} />
+        ) : null}
+
         <Tag text={tag.text} tone={tag.tone} />
       </View>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDebounced } from "@/lib/useDebounced";
 import { Guard } from "@/components/Guard";
 import { Shell } from "@/components/Shell";
 import { Icon } from "@/components/Icon";
@@ -14,24 +15,113 @@ import {
   Input,
   SearchInput,
   Skeleton,
+  Tbody,
   Td,
   TableShell,
   Th,
 } from "@/components/ui";
-import { KIND_LABEL, formatDate, formatTime, today, usePunches } from "@/lib/queries";
+import { api } from "@/lib/api";
+import {
+  KIND_LABEL,
+  formatDate,
+  formatTime,
+  today,
+  usePunches,
+  type Paged,
+  type PunchSort,
+  type Punch,
+} from "@/lib/queries";
 
 export default function PunchesPage() {
   const [from, setFrom] = useState(today());
   const [to, setTo] = useState(today());
   const [search, setSearch] = useState("");
+  // Uma consulta por palavra digitada, nao por tecla.
+  const buscaAtrasada = useDebounced(search);
   const [page, setPage] = useState(1);
+  const [exportando, setExportando] = useState(false);
+  const [erroExport, setErroExport] = useState<string | null>(null);
 
-  const query = usePunches({ from, to, search: search || undefined, page, pageSize: 50 });
+  const [sort, setSort] = useState<PunchSort | undefined>();
+  const [dir, setDir] = useState<"asc" | "desc">("desc");
 
-  function exportCsv() {
-    const rows = query.data?.items ?? [];
-    // Exportação do que está na tela. O AFD assinado (Portaria 671) é outra
-    // coisa e ainda não existe — ver README.
+  const intervaloInvalido = Boolean(from && to && from > to);
+
+  const query = usePunches({
+    from,
+    to,
+    search: buscaAtrasada || undefined,
+    page,
+    pageSize: 50,
+    sort,
+    dir,
+  });
+
+  /// Primeiro clique numa coluna ordena decrescente (o mais recente/maior
+  /// primeiro, que é o que se quer ver numa lista de ponto); o segundo
+  /// inverte. Trocar de coluna volta para a primeira página, senão a pessoa
+  /// cai na página 7 de uma ordenação que acabou de mudar.
+  const ordenacao = {
+    sortedBy: sort,
+    sortDir: dir,
+    onSort: (chave: string) => {
+      setPage(1);
+      if (chave === sort) {
+        setDir((atual) => (atual === "desc" ? "asc" : "desc"));
+      } else {
+        setSort(chave as PunchSort);
+        setDir("desc");
+      }
+    },
+  };
+
+  /*
+   * Exporta o PERÍODO INTEIRO, não a página visível.
+   *
+   * Antes, o arquivo saía com no máximo 50 linhas — as da página atual — mas
+   * com o nome `marcacoes-<de>-a-<ate>.csv`, prometendo o intervalo todo. Num
+   * processo trabalhista esse arquivo seria apresentado como "as marcações do
+   * período", e faltariam as outras páginas sem ninguém notar.
+   *
+   * A API já pagina; aqui percorremos até o fim antes de montar o arquivo.
+   *
+   * O AFD assinado da Portaria 671 continua sendo outra coisa, e ainda não
+   * existe — ver README.
+   */
+  async function exportCsv() {
+    setExportando(true);
+    try {
+      const rows: Punch[] = [];
+      let pagina = 1;
+      let totalPaginas = 1;
+
+      do {
+        const lote = await api<Paged<Punch>>(
+          // A ordenação vai junto: o arquivo tem de sair na mesma ordem que
+          // está na tela, senão quem exporta não reconhece o que recebeu.
+          `/punches?${new URLSearchParams({
+            from,
+            to,
+            ...(buscaAtrasada ? { search: buscaAtrasada } : {}),
+            ...(sort ? { sort, dir } : {}),
+            page: String(pagina),
+            pageSize: "200",
+          })}`,
+        );
+        rows.push(...lote.items);
+        totalPaginas = lote.totalPages;
+        pagina += 1;
+      } while (pagina <= totalPaginas);
+
+      montarArquivo(rows);
+    } catch (falha) {
+      setErroExport((falha as Error).message);
+    } finally {
+      setExportando(false);
+    }
+  }
+
+  function montarArquivo(rows: Punch[]) {
     const header = [
       "NSR",
       "Colaborador",
@@ -70,15 +160,18 @@ export default function PunchesPage() {
     <Guard>
       <Shell
         title="Marcações"
-        subtitle="Registros de ponto, na ordem em que chegaram"
+        subtitle="Registros de ponto do período"
         actions={
           <Button
             variant="outline"
             icon="download"
-            onClick={exportCsv}
-            disabled={!query.data?.items.length}
+            onClick={() => void exportCsv()}
+            loading={exportando}
+            disabled={!query.data?.total}
           >
-            Exportar
+            {query.data?.total
+              ? `Exportar ${query.data.total} marcaç${query.data.total === 1 ? "ão" : "ões"}`
+              : "Exportar"}
           </Button>
         }
       >
@@ -124,6 +217,18 @@ export default function PunchesPage() {
             </div>
           </Card>
 
+          {/* `De` depois de `Até` devolve lista vazia da API, e a tela dizia
+              "Nenhuma marcação no período" — uma resposta correta para uma
+              pergunta impossível. Agora o intervalo inválido é nomeado. */}
+          {intervaloInvalido ? (
+            <ErrorNote>
+              A data inicial é posterior à final. Inverta as duas para ver os
+              registros do período.
+            </ErrorNote>
+          ) : null}
+
+          {erroExport ? <ErrorNote>{erroExport}</ErrorNote> : null}
+
           {query.isError ? (
             <ErrorNote>{(query.error as Error).message}</ErrorNote>
           ) : null}
@@ -158,22 +263,30 @@ export default function PunchesPage() {
               <TableShell>
                 <thead>
                   <tr>
-                    <Th>Colaborador</Th>
+                    <Th sortKey="employee" {...ordenacao}>
+                      Colaborador
+                    </Th>
                     <Th>Matrícula</Th>
                     <Th>Data</Th>
-                    <Th>Hora</Th>
-                    <Th>Tipo</Th>
-                    <Th>NSR</Th>
+                    <Th sortKey="punchedAt" {...ordenacao}>
+                      Hora
+                    </Th>
+                    <Th sortKey="kind" {...ordenacao}>
+                      Tipo
+                    </Th>
+                    <Th sortKey="nsr" {...ordenacao}>
+                      NSR
+                    </Th>
                     <Th>Origem</Th>
                   </tr>
                 </thead>
-                <tbody>
+                <Tbody>
                   {query.data?.items.map((punch) => (
                     <tr key={punch.id} className="hover:bg-paper">
-                      <Td className="font-600 text-ink">{punch.employee.name}</Td>
+                      <Td className="font-semibold text-ink">{punch.employee.name}</Td>
                       <Td className="tnum text-ink-2">{punch.employee.registration}</Td>
                       <Td className="tnum text-ink-2">{formatDate(punch.localDate)}</Td>
-                      <Td className="tnum font-display text-[17px] font-700 text-ink">
+                      <Td className="tnum font-display text-[17px] font-bold text-ink">
                         {formatTime(punch.punchedAt)}
                       </Td>
                       <Td className="text-ink-2">{KIND_LABEL[punch.kind] ?? punch.kind}</Td>
@@ -191,7 +304,7 @@ export default function PunchesPage() {
                       </Td>
                     </tr>
                   ))}
-                </tbody>
+                </Tbody>
               </TableShell>
 
               <div className="flex items-center justify-between text-[13px] text-muted">

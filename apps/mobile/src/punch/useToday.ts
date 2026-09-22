@@ -70,8 +70,9 @@ export function labelForKind(kind: PunchKind): string {
   return DAY_SLOTS.find((slot) => slot.kind === kind)?.label ?? 'Registro';
 }
 
-/// Texto do botão principal na tela 03: "REGISTRAR SAÍDA", "REGISTRAR ENTRADA"...
+/// Texto do botão principal: "Registrar saída", "Registrar entrada"…
+/// Sentence case, que é a convenção do iOS para botão e a norma do pt-BR.
 export function buttonLabelForKind(kind: PunchKind): string {
-  if (kind === 'UNSPECIFIED') return 'REGISTRAR PONTO';
-  return `REGISTRAR ${labelForKind(kind).toUpperCase()}`;
+  if (kind === 'UNSPECIFIED') return 'Registrar ponto';
+  return `Registrar ${labelForKind(kind).toLowerCase()}`;
 }

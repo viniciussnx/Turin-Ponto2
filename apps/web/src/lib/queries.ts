@@ -30,6 +30,10 @@ export interface Paged<T> {
   totalPages: number;
 }
 
+/// Colunas ordenáveis. Espelha o enum `PunchSort` da API — a lista é fechada
+/// dos dois lados porque o valor vira caminho de `orderBy` no Prisma.
+export type PunchSort = "punchedAt" | "nsr" | "employee" | "kind";
+
 export function usePunches(params: {
   from?: string;
   to?: string;
@@ -37,10 +41,13 @@ export function usePunches(params: {
   search?: string;
   page?: number;
   pageSize?: number;
+  sort?: PunchSort;
+  dir?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: ["punches", params],
     queryFn: () => api<Paged<Punch>>(`/punches?${qs(params)}`),
+    placeholderData: (anterior) => anterior,
   });
 }
 
@@ -74,6 +81,10 @@ export function useEmployees(params: {
   return useQuery({
     queryKey: ["employees", params],
     queryFn: () => api<Paged<Employee>>(`/employees?${qs(params)}`),
+    // Mantém a tabela anterior na tela enquanto a próxima página ou o novo
+    // filtro carregam. Sem isto a lista sumia e voltava a cada tecla — o olho
+    // perdia a linha que estava seguindo.
+    placeholderData: (anterior) => anterior,
   });
 }
 

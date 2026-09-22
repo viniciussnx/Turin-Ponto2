@@ -30,8 +30,8 @@ export function PendingModule({
           </div>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-[15px] font-600 text-ink">{title}</h2>
-              <span className="rounded-full bg-warn-soft px-2.5 py-0.5 text-[12px] font-600 text-warn">
+              <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+              <span className="rounded-full bg-warn-soft px-2.5 py-0.5 text-[12px] font-semibold text-warn">
                 Falta a API
               </span>
             </div>

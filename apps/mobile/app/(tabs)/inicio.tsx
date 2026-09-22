@@ -5,7 +5,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { brandGradient, fonts, radius, spacing } from '../../src/theme/tokens';
+import { brandGradient, fonts, radius, spacing, ALTURA_ABAS, MIN_TOQUE } from '../../src/theme/tokens';
+import { useScale } from '../../src/theme/useScale';
 import { PrimaryButton, TurinLogo } from '../../src/components/ui';
 import { Icon } from '../../src/components/Icon';
 import { DAY_SLOTS, buttonLabelForKind, useToday } from '../../src/punch/useToday';
@@ -14,6 +15,7 @@ import { DAY_SLOTS, buttonLabelForKind, useToday } from '../../src/punch/useToda
 export default function HomeScreen() {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
+  const { empilhar } = useScale();
   const router = useRouter();
   const { employee } = useAuth();
   const { punches, pending, loading, nextKind, reload } = useToday();
@@ -33,11 +35,11 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: c.bg }}
-      contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}
+      contentContainerStyle={{ paddingBottom: insets.bottom + ALTURA_ABAS + spacing.lg }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          tintColor={c.brand}
+          tintColor={c.brandAction}
           onRefresh={async () => {
             setRefreshing(true);
             await reload();
@@ -119,7 +121,7 @@ export default function HomeScreen() {
             letterSpacing: 0.4,
           }}
         >
-          {(employee?.name ?? '').toUpperCase()}
+          {employee?.name ?? ''}
         </Text>
 
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
@@ -155,11 +157,10 @@ export default function HomeScreen() {
             style={{
               color: c.muted,
               fontFamily: fonts.semibold,
-              fontSize: 11,
-              letterSpacing: 1.4,
+              fontSize: 13,
             }}
           >
-            {`AGORA · ${formatDay(now)}`.toUpperCase()}
+            {`Agora · ${formatDay(now)}`}
           </Text>
           <StatusPill working={working} />
         </View>
@@ -167,10 +168,11 @@ export default function HomeScreen() {
         <Text
           style={{
             color: c.text,
-            fontFamily: fonts.display,
-            fontSize: 52,
+            // O relógio é número, e número lê como instrumento na mono — a
+            // mesma família do espelho e do painel.
+            fontFamily: fonts.mono,
+            fontSize: 48,
             lineHeight: 56,
-            letterSpacing: 1,
           }}
         >
           {formatTime(now)}
@@ -178,7 +180,7 @@ export default function HomeScreen() {
 
         <PrimaryButton
           label={buttonLabelForKind(nextKind)}
-          onPress={() => router.push('/ponto')}
+          onPress={() => router.push('/registrar')}
         />
 
         {pending > 0 ? (
@@ -210,27 +212,48 @@ export default function HomeScreen() {
             style={{
               color: c.muted,
               fontFamily: fonts.semibold,
-              fontSize: 11,
-              letterSpacing: 1.4,
+              fontSize: 13,
             }}
           >
-            MARCAÇÕES DE HOJE
+            Marcações de hoje
           </Text>
-          <Pressable onPress={() => router.push('/espelho')} hitSlop={8}>
-            <Text style={{ color: c.brand, fontFamily: fonts.semibold, fontSize: 14 }}>
+          <Pressable
+            onPress={() => router.push('/espelho')}
+            accessibilityRole="button"
+            accessibilityLabel="Ver o espelho de ponto do mês"
+            style={{ minHeight: MIN_TOQUE, justifyContent: 'center' }}
+          >
+            <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 15 }}>
               Ver detalhe
             </Text>
           </Pressable>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+        {/*
+         * Quatro células lado a lado cabem em tamanho padrão. A partir de
+         * ~135% de Dynamic Type cada uma fica com ~70 pt de largura e
+         * "ENTRADA"/"ALMOÇO" quebram em três linhas ou somem — então viram
+         * grade 2×2. É o "stacked layout" que `typography.md › Supporting
+         * Dynamic Type` recomenda para linha horizontal apertada.
+         */}
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: empilhar ? 'wrap' : 'nowrap',
+            gap: spacing.sm,
+          }}
+        >
           {DAY_SLOTS.map((slot, index) => (
-            <SlotCell
+            <View
               key={slot.kind}
-              label={slot.label}
-              time={punches[index] ? formatTime(new Date(punches[index].punchedAt)) : null}
-              loading={loading}
-            />
+              style={empilhar ? { width: '48%', flexGrow: 1 } : { flex: 1 }}
+            >
+              <SlotCell
+                label={slot.label}
+                time={punches[index] ? formatTime(new Date(punches[index].punchedAt)) : null}
+                loading={loading}
+              />
+            </View>
           ))}
         </View>
       </View>
@@ -255,7 +278,7 @@ function Chip({ text }: { text: string }) {
 
 function StatusPill({ working }: { working: boolean }) {
   const { c } = useTheme();
-  const color = working ? c.brand : c.muted;
+  const color = working ? c.brandAction : c.muted;
 
   return (
     <View
@@ -305,11 +328,10 @@ function SlotCell({
         style={{
           color: c.muted,
           fontFamily: fonts.semibold,
-          fontSize: 10,
-          letterSpacing: 1.1,
+          fontSize: 12,
         }}
       >
-        {label.toUpperCase()}
+        {label}
       </Text>
       <Text
         style={{

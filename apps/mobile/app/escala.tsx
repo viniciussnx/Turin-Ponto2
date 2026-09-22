@@ -50,9 +50,9 @@ export default function EscalaScreen() {
                   alignItems: 'center',
                   paddingVertical: spacing.md,
                   borderRadius: radius.md,
-                  backgroundColor: active ? c.brand : c.surface,
+                  backgroundColor: active ? c.brandAction : c.surface,
                   borderWidth: 1,
-                  borderColor: active ? c.brand : c.line,
+                  borderColor: active ? c.brandAction : c.line,
                   gap: 3,
                 }}
               >
@@ -139,7 +139,7 @@ function DayCard({ day, onOpen }: { day: ShiftDay; onOpen: () => void }) {
       >
         <View>
           <Text style={{ color: c.text, fontFamily: fonts.display, fontSize: 24 }}>
-            {day.shiftName.toUpperCase()}
+            {day.shiftName}
           </Text>
           <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 14, marginTop: 2 }}>
             {day.window ?? 'Sem jornada prevista'}
@@ -168,7 +168,7 @@ function DayCard({ day, onOpen }: { day: ShiftDay; onOpen: () => void }) {
       ) : null}
 
       <Pressable onPress={onOpen} hitSlop={8} style={{ marginTop: spacing.lg }}>
-        <Text style={{ color: c.brand, fontFamily: fonts.semibold, fontSize: 14 }}>
+        <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 14 }}>
           Ver prevista × realizada ›
         </Text>
       </Pressable>

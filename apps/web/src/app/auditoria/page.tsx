@@ -27,7 +27,7 @@ export default function AuditPage() {
                 <Icon name="shield" className="h-5 w-5 text-turin-ink" />
               </div>
               <div className="min-w-[260px] flex-1">
-                <h2 className="text-[15px] font-600 text-ink">Como a cadeia funciona</h2>
+                <h2 className="text-[15px] font-semibold text-ink">Como a cadeia funciona</h2>
                 <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
                   Cada marcação recebe um NSR sequencial e um hash calculado a partir do
                   hash da anterior. Alterar uma linha direto no banco quebra a cadeia de
@@ -52,7 +52,7 @@ export default function AuditPage() {
                     <Icon name="check" className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display text-[22px] font-700 text-turin-ink">
+                    <h3 className="font-display text-[22px] font-bold text-turin-ink">
                       CADEIA ÍNTEGRA
                     </h3>
                     <p className="mt-1 text-[14px] text-ink-2">
@@ -75,20 +75,20 @@ export default function AuditPage() {
                     <Icon name="alert" className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display text-[22px] font-700 text-bad">
+                    <h3 className="font-display text-[22px] font-bold text-bad">
                       CADEIA QUEBRADA
                     </h3>
                     <p className="mt-1 text-[14px] text-ink-2">{verify.data.reason}</p>
                     <div className="mt-4 flex flex-wrap gap-8">
                       <div>
                         <p className="eyebrow">Primeiro NSR afetado</p>
-                        <p className="tnum font-display text-[30px] font-700 text-bad">
+                        <p className="tnum font-display text-[30px] font-bold text-bad">
                           {verify.data.brokenAtNsr}
                         </p>
                       </div>
                       <div>
                         <p className="eyebrow">Verificadas até ali</p>
-                        <p className="tnum font-display text-[30px] font-700 text-ink">
+                        <p className="tnum font-display text-[30px] font-bold text-ink">
                           {verify.data.checked.toLocaleString("pt-BR")}
                         </p>
                       </div>

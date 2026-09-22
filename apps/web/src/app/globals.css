@@ -1,51 +1,150 @@
 @import "tailwindcss";
 
 /*
- * Painel Turin Ponto.
+ * Painel Turin Ponto — sistema de cor.
  *
- * As cores vêm dos mesmos tokens do app (design/Meu Ponto Turin.dc.html), para
- * que painel e aplicativo leiam como um produto só. O que muda é a densidade:
- * o app tem uma tarefa por tela, o painel tem tabelas de 900 linhas.
+ * A paleta é a mesma do painel de férias da Turin
+ * (gestaodeferias.turintransportes.com), para que os dois sistemas internos
+ * leiam como um produto só. A escala `turin-*` foi copiada de lá sem alterar
+ * nenhum valor.
+ *
+ * REGRA QUE NÃO PODE SER QUEBRADA: `turin-500` é a cor da marca e NUNCA é
+ * fundo de texto branco — branco sobre ela dá 2,93:1, abaixo do mínimo. Fundo
+ * de botão é `turin-700` (6,18:1) e o estado pressionado é `turin-800`
+ * (8,41:1). O 500 vive em chips, bordas e pontos de status.
+ *
+ * Todo par de cor usado aqui está verificado em scripts/verificar-contraste.mjs.
+ * Rode `node scripts/verificar-contraste.mjs` antes de mexer em qualquer valor.
  */
 
 :root {
-  /* Marca */
-  --turin: #0baf29;
-  --turin-ink: #08871f;
-  --turin-soft: #e8f7ec;
-  --turin-line: rgba(11, 175, 41, 0.28);
-  /* Verde claro para uso sobre o grafite do rail, onde o verde da marca some */
-  --turin-glow: #5be07a;
+  /* Escala da marca — idêntica à do painel de férias */
+  --turin-50: #eefbf1;
+  --turin-100: #d5f5dd;
+  --turin-200: #ade9bd;
+  --turin-300: #76d894;
+  --turin-400: #3ec164;
+  --turin-500: #0cb02a;
+  --turin-600: #0a8f22;
+  --turin-700: #0b711f;
+  --turin-800: #0d5a1e;
+  --turin-900: #0b4a1b;
+  --turin-950: #062812;
 
-  /* Rail escuro: o mesmo grafite esverdeado do splash do app */
-  --graphite: #0b1710;
-  --graphite-2: #132219;
-  --graphite-3: #1c3024;
+  /*
+   * Atalhos semânticos — é isto que os componentes usam.
+   *
+   * `--turin` aponta para o 700, NÃO para o 500. O padrão precisa ser a cor
+   * segura: quem escrever `text-turin` ou `bg-turin` sem pensar acerta em
+   * contraste. O verde vibrante da marca existe como `--turin-marca` e tem de
+   * ser pedido pelo nome, sempre para preenchimento decorativo — nunca para
+   * carregar texto.
+   */
+  --turin: var(--turin-700);
+  --turin-marca: var(--turin-500);
+  --turin-ink: var(--turin-800);
+  --turin-acao: var(--turin-700);
+  --turin-acao-2: var(--turin-800);
+  --turin-soft: var(--turin-50);
+  --turin-line: var(--turin-200);
+  /* Tinta sobre o verde de ação. Vira escura no tema escuro. */
+  --on-turin: #ffffff;
 
-  /* Texto e superfícies */
-  --ink: #0f1f17;
-  --ink-2: #3a4e44;
-  --muted: #788b80;
-  --line: #e2e8e3;
-  --line-2: #eef2ef;
-  --paper: #f5f7f5;
+  /* Verde claro para o rail escuro, onde o 500 some contra o fundo */
+  --turin-glow: var(--turin-300);
+
+  /* Rail escuro: o verde mais profundo da própria escala, não um grafite solto */
+  --graphite: var(--turin-950);
+  --graphite-2: #0a3418;
+  --graphite-3: #124a22;
+
+  /* Tinta e papel — do painel de férias, com `tinta-3` escurecida para passar
+     em contraste sobre papel e sobre a superfície de hover (lá ela reprova). */
+  --ink: #12211a;
+  --ink-2: #445248;
+  --muted: #5c6b62;
+  --line: #cfdad2;
+  --line-2: #e2e9e3;
+  --paper: #f4f7f4;
   --surface: #ffffff;
 
-  /* Situação */
-  --warn: #d98a00;
+  /* Situação — escurecidas até passarem 4,5:1 sobre branco e sobre o próprio soft */
+  --warn: #9a5b00;
   --warn-soft: #fdf3e2;
-  --bad: #d64545;
+  --bad: #c0342f;
   --bad-soft: #fbecec;
-  --info: #2c6bd6;
+  --info: #1f5fbf;
   --info-soft: #eaf1fc;
 }
 
+/*
+ * Aparência escura.
+ *
+ * O DP abre este painel às 5h da manhã e o deixa aberto o dia inteiro. As
+ * cores de sinalização são REDEFINIDAS, não herdadas — `dark-mode.md` é
+ * explícito: *"these colors aren't necessarily inversions of their light
+ * counterparts."* Um `bad` de 5,57:1 sobre branco vira 3,9:1 sobre grafite.
+ *
+ * O guard `:root:not([data-theme="light"])` deixa a porta aberta para uma
+ * preferência manual futura sem reescrever este bloco.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #eaf2ed;
+    --ink-2: #b7c6bd;
+    --muted: #8fa396;
+    --line: #2a3d33;
+    --line-2: #1e2e26;
+    --paper: #0a1410;
+    --surface: #121f19;
+
+    /* No escuro a ação inverte: fundo claro, tinta escura — o mesmo que o
+       iOS faz com o botão preenchido. */
+    --turin: var(--turin-300);
+    --turin-acao: var(--turin-300);
+    --turin-acao-2: var(--turin-200);
+    --turin-ink: var(--turin-300);
+    --turin-soft: #16311f;
+    --turin-line: #24512f;
+    --turin-glow: var(--turin-300);
+
+    --warn: #e8a62e;
+    --warn-soft: #2e2415;
+    --bad: #f2827d;
+    --bad-soft: #321d1d;
+    --info: #7fb0f2;
+    --info-soft: #17233a;
+
+    /* O verde de ação clareou, então a tinta por cima dele escurece. Isto é
+       um token e não uma regra sobre `.bg-turin-acao` de propósito: uma regra
+       de classe disputaria especificidade com `text-white` do Tailwind e o
+       vencedor dependeria da ordem de saída do CSS. */
+    --on-turin: #12211a;
+  }
+}
+
 @theme inline {
+  --color-turin-50: var(--turin-50);
+  --color-turin-100: var(--turin-100);
+  --color-turin-200: var(--turin-200);
+  --color-turin-300: var(--turin-300);
+  --color-turin-400: var(--turin-400);
+  --color-turin-500: var(--turin-500);
+  --color-turin-600: var(--turin-600);
+  --color-turin-700: var(--turin-700);
+  --color-turin-800: var(--turin-800);
+  --color-turin-900: var(--turin-900);
+  --color-turin-950: var(--turin-950);
+
   --color-turin: var(--turin);
+  --color-turin-marca: var(--turin-marca);
   --color-turin-ink: var(--turin-ink);
+  --color-turin-acao: var(--turin-acao);
+  --color-turin-acao-2: var(--turin-acao-2);
   --color-turin-soft: var(--turin-soft);
   --color-turin-line: var(--turin-line);
   --color-turin-glow: var(--turin-glow);
+  --color-on-turin: var(--on-turin);
 
   --color-graphite: var(--graphite);
   --color-graphite-2: var(--graphite-2);
@@ -66,8 +165,9 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
 
-  --font-sans: var(--font-barlow);
-  --font-display: var(--font-barlow-condensed);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-inter-tight);
+  --font-mono: var(--font-jetbrains);
 }
 
 * {
@@ -82,46 +182,77 @@ body {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-barlow), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /*
  * Números que se empilham em coluna precisam de largura fixa, senão "11:58" e
- * "07:04" não alinham e a tabela vira um serrilhado. Vale para todo horário,
- * duração, matrícula e contagem no painel.
+ * "07:04" não alinham e a tabela vira um serrilhado. JetBrains Mono já é
+ * monoespaçada; `tnum` fica como garantia para quando o fallback entra.
  */
 .tnum {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/* Rótulo de seção: caixa alta, entrelinha larga. Mesmo padrão do app. */
+/*
+ * Rótulo de seção. O versalete com entrelinha larga era o principal vetor de
+ * "admin genérico" do painel — agora é minúsculo, com peso e cor fazendo a
+ * hierarquia em vez de caixa alta.
+ */
 .eyebrow {
-  font-family: var(--font-barlow), system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--muted);
 }
 
-/* Foco visível e consistente — o painel é operado muito no teclado. */
+/*
+ * Foco visível. O anel anterior usava `--turin` (2,72:1 sobre papel) e ficava
+ * abaixo do mínimo de 3:1 exigido para indicador não-textual; agora usa
+ * `turin-acao` (5,73:1 sobre papel, 6,18:1 sobre branco).
+ */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--turin);
+  outline: 2px solid var(--turin-acao);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
+/* Dentro do rail escuro o anel precisa do verde claro para aparecer. */
+.rail-escuro :where(a, button, [tabindex]):focus-visible {
+  outline-color: var(--turin-glow);
+}
+
 ::selection {
-  background: var(--turin);
-  color: #fff;
+  background: var(--turin-200);
+  color: var(--ink);
 }
 
 /* Barra de rolagem discreta nas tabelas longas */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
+}
+
+/* Link para pular a navegação — primeiro item focável do painel. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
+  padding: 10px 16px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--turin-acao);
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -131,5 +262,59 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Impressão. O espelho de ponto é um documento que sai do sistema e é medido
+ * pela Portaria MTP 671/2021 num processo trabalhista — não pode sair com o
+ * rail de navegação e os botões impressos no meio.
+ */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  .nao-imprimir,
+  nav,
+  aside,
+  button {
+    display: none !important;
+  }
+
+  .imprimir-limpo {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid #999;
+    padding: 4pt 6pt;
+  }
+
+  a[href]::after {
+    content: "";
   }
 }

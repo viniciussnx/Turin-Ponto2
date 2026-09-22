@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Guard } from "@/components/Guard";
 import { Shell } from "@/components/Shell";
 import { Icon } from "@/components/Icon";
@@ -12,6 +13,7 @@ import {
   ErrorNote,
   Input,
   Skeleton,
+  SuccessNote,
 } from "@/components/ui";
 import {
   ADJUSTMENT_STATUS_LABEL,
@@ -48,7 +50,7 @@ export default function AdjustmentsPage() {
               <button
                 key={tab.key}
                 onClick={() => setStatus(tab.key)}
-                className={`-mb-px border-b-2 px-4 py-2.5 text-[14px] font-600 transition-colors ${
+                className={`-mb-px border-b-2 px-4 py-2.5 text-[14px] font-semibold transition-colors ${
                   status === tab.key
                     ? "border-turin text-ink"
                     : "border-transparent text-muted hover:text-ink-2"
@@ -103,6 +105,8 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
   const review = useReviewAdjustment();
   const [note, setNote] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [confirmarRecusa, setConfirmarRecusa] = useState(false);
+  const [decidido, setDecidido] = useState<"APPROVED" | "REJECTED" | null>(null);
 
   const pending = adjustment.status === "PENDING";
   const tone =
@@ -114,8 +118,34 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
           ? "bad"
           : "neutral";
 
+  /*
+   * Aprovar ou recusar um ajuste tem efeito jurídico: entra na cadeia do
+   * espelho e é o que vale num processo trabalhista. Não pode acontecer no
+   * primeiro clique, e não pode ter o silêncio como retorno.
+   *
+   * Recusar é o caminho irreversível do ponto de vista do colaborador — o
+   * pedido morre e ele precisa abrir outro. Por isso só ele confirma; aprovar
+   * segue direto, porque é o caminho construtivo e ainda é auditável.
+   */
   function decide(status: "APPROVED" | "REJECTED") {
-    review.mutate({ id: adjustment.id, status, reviewNote: note.trim() || undefined });
+    if (status === "REJECTED") {
+      setConfirmarRecusa(true);
+      return;
+    }
+    aplicar(status);
+  }
+
+  function aplicar(status: "APPROVED" | "REJECTED") {
+    setConfirmarRecusa(false);
+    review.mutate(
+      { id: adjustment.id, status, reviewNote: note.trim() || undefined },
+      {
+        onSuccess: () => {
+          setExpanded(false);
+          setDecidido(status);
+        },
+      },
+    );
   }
 
   return (
@@ -127,7 +157,7 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
 
         <div className="min-w-[240px] flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[15px] font-600 text-ink">{adjustment.employee.name}</h3>
+            <h3 className="text-[15px] font-semibold text-ink">{adjustment.employee.name}</h3>
             <Badge tone={tone}>{ADJUSTMENT_STATUS_LABEL[adjustment.status]}</Badge>
           </div>
 
@@ -141,7 +171,7 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
               que aprovar cria uma marcação nova, não altera a antiga. */}
           {pending ? (
             <div className="mt-3 rounded-lg bg-paper px-4 py-3 text-[13px] leading-relaxed text-ink-2">
-              <strong className="font-600">Ao aprovar:</strong>{" "}
+              <strong className="font-semibold">Ao aprovar:</strong>{" "}
               {describeEffect(adjustment)}
             </div>
           ) : null}
@@ -168,6 +198,7 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
                   value={note}
                   onChange={(event) => setNote(event.target.value)}
                   placeholder="Observação (opcional)"
+                  aria-label={`Observação para ${adjustment.employee.name}`}
                   className="w-[240px]"
                 />
                 <div className="flex gap-2">
@@ -180,9 +211,14 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
                   >
                     Aprovar
                   </Button>
+                  {/* "Recusar" era `variant="danger"` — vermelho cheio, com o
+                      mesmo peso visual do "Aprovar". Duas ações de peso igual
+                      lado a lado não dizem qual é a esperada. Recusar é uma
+                      escolha legítima, não uma destruição: fica em contorno,
+                      e o vermelho aparece no diálogo de confirmação. */}
                   <Button
                     size="sm"
-                    variant="danger"
+                    variant="outline"
                     onClick={() => decide("REJECTED")}
                     loading={review.isPending}
                     icon="x"
@@ -199,13 +235,40 @@ function AdjustmentCard({ adjustment }: { adjustment: Adjustment }) {
             )}
 
             {review.isError ? (
-              <p className="max-w-[240px] text-[12px] text-bad">
+              <p role="alert" className="max-w-[240px] text-[12px] text-bad">
                 {(review.error as Error).message}
               </p>
             ) : null}
           </div>
         ) : null}
       </div>
+
+      {/* Confirmação do que vira a decisão, visível e anunciada. Antes, a
+          ação sumia da lista sem dizer que deu certo. */}
+      {decidido ? (
+        <div className="border-t border-line px-5 py-3">
+          <SuccessNote>
+            {decidido === "APPROVED"
+              ? `Ajuste de ${adjustment.employee.name} aprovado. A marcação nova já entrou no espelho.`
+              : `Pedido de ${adjustment.employee.name} recusado.${note.trim() ? " A observação foi enviada." : ""}`}
+          </SuccessNote>
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        aberto={confirmarRecusa}
+        destrutivo
+        titulo={`Recusar o pedido de ${adjustment.employee.name}?`}
+        consequencia={
+          note.trim()
+            ? `O pedido é encerrado e ${adjustment.employee.name} recebe sua observação: “${note.trim()}”. Para mudar de ideia depois, ele terá de abrir um pedido novo.`
+            : `O pedido é encerrado sem observação. ${adjustment.employee.name} não saberá o motivo, e terá de abrir um pedido novo. Considere escrever uma observação antes de recusar.`
+        }
+        confirmar="Recusar pedido"
+        carregando={review.isPending}
+        onCancelar={() => setConfirmarRecusa(false)}
+        onConfirmar={() => aplicar("REJECTED")}
+      />
     </Card>
   );
 }

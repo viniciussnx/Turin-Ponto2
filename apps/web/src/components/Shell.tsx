@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "./Providers";
 import { Icon, type IconName } from "./Icon";
 import { TurinMark } from "./TurinMark";
@@ -51,26 +51,53 @@ export function Shell({
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [estreito, setEstreito] = useState(false);
+
+  /// O rail é `position: fixed` e sai da tela por `translate` no mobile — mas
+  /// continuava focável e lido pelo leitor de tela enquanto estava fora do
+  /// campo de visão, então o Tab passeava por doze links invisíveis antes de
+  /// chegar ao conteúdo. `inert` só entra abaixo de lg, onde o rail é gaveta.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const sincronizar = () => setEstreito(mq.matches);
+    sincronizar();
+    mq.addEventListener("change", sincronizar);
+    return () => mq.removeEventListener("change", sincronizar);
+  }, []);
+
+  /// Esc fecha a gaveta. Sem isso, quem abriu pelo teclado ficava sem saída.
+  useEffect(() => {
+    if (!open) return;
+    const aoTeclar = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", aoTeclar);
+    return () => document.removeEventListener("keydown", aoTeclar);
+  }, [open]);
+
+  const railOculto = estreito && !open;
 
   return (
     <div className="flex min-h-screen">
-      {/* Rail escuro fixo. O grafite esverdeado é o mesmo do splash do app. */}
+      {/* Rail escuro fixo, no verde mais profundo da escala Turin. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[236px] flex-col bg-graphite transition-transform lg:translate-x-0 ${
+        inert={railOculto}
+        aria-hidden={railOculto || undefined}
+        className={`rail-escuro fixed inset-y-0 left-0 z-40 flex w-[236px] flex-col bg-graphite transition-transform lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-16 items-center gap-3 px-5">
           <TurinMark className="h-5 w-auto text-turin-glow" />
-          <span className="font-display text-[15px] font-600 tracking-[0.18em] text-white/70">
+          <span className="font-display text-[15px] font-semibold tracking-[0.18em] text-white">
             PONTO
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        <nav aria-label="Seções do painel" className="flex-1 overflow-y-auto px-3 pb-4">
           {NAV.map((section) => (
             <div key={section.group} className="mb-6">
-              <p className="mb-2 px-3 text-[10px] font-600 uppercase tracking-[0.16em] text-white/35">
+              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">
                 {section.group}
               </p>
               <ul className="space-y-0.5">
@@ -88,13 +115,13 @@ export function Shell({
                         className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] transition-colors ${
                           active
                             ? "bg-graphite-3 text-white"
-                            : "text-white/60 hover:bg-graphite-2 hover:text-white/90"
+                            : "text-white/75 hover:bg-graphite-2 hover:text-white"
                         }`}
                       >
                         <Icon
                           name={item.icon}
                           className={`h-[18px] w-[18px] ${
-                            active ? "text-turin-glow" : "text-white/45"
+                            active ? "text-turin-glow" : "text-white/70"
                           }`}
                         />
                         {item.label}
@@ -109,18 +136,18 @@ export function Shell({
 
         <div className="border-t border-white/8 p-3">
           <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-turin text-[13px] font-700 text-white">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-turin text-[13px] font-bold text-white">
               {initials(user?.name ?? "")}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-600 text-white/90">{user?.name}</p>
-              <p className="truncate text-[11px] text-white/45">{roleLabel(user?.role)}</p>
+              <p className="truncate text-[13px] font-semibold text-white/90">{user?.name}</p>
+              <p className="truncate text-[11px] text-white/70">{roleLabel(user?.role)}</p>
             </div>
             <button
               onClick={signOut}
               title="Sair"
               aria-label="Sair"
-              className="rounded-md p-1.5 text-white/45 hover:bg-graphite-2 hover:text-white"
+              className="rounded-md p-2 text-white/70 hover:bg-graphite-2 hover:text-white"
             >
               <Icon name="logout" className="h-[17px] w-[17px]" />
             </button>
@@ -148,7 +175,7 @@ export function Shell({
             </button>
 
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-[26px] leading-none font-700 tracking-[0.01em] text-ink">
+              <h1 className="font-display text-[26px] leading-none font-bold tracking-[0.01em] text-ink">
                 {title}
               </h1>
               {subtitle ? (
@@ -160,7 +187,9 @@ export function Shell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-6 lg:px-8">{children}</main>
+        <main id="conteudo" tabIndex={-1} className="flex-1 px-5 py-6 lg:px-8 focus:outline-none">
+          {children}
+        </main>
       </div>
     </div>
   );

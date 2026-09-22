@@ -117,7 +117,7 @@ async function parse<T>(response: Response): Promise<T> {
   const body: unknown = text ? safeJson(text) : null;
 
   if (!response.ok) {
-    throw new ApiError(messageOf(body) ?? `Erro ${response.status}`, response.status, body);
+    throw new ApiError(humanize(response.status, messageOf(body)), response.status, body);
   }
   return body as T;
 }
@@ -137,6 +137,60 @@ function messageOf(body: unknown): string | null {
   if (typeof message === "string") return message;
   if (Array.isArray(message) && typeof message[0] === "string") return message[0];
   return null;
+}
+
+/*
+ * Traduz a falha para uma frase que diz o que houve e o que fazer.
+ *
+ * Antes, a mensagem crua do Nest ia direto para a tela — o analista do DP via
+ * "Bad Request", "Forbidden resource" ou uma linha de validação em inglês com
+ * o nome do campo do DTO. `writing.md` pede o contrário: *"When an error
+ * occurs, focus on what people can do next."*
+ *
+ * Uma mensagem específica do servidor em português é sempre melhor que a
+ * genérica daqui, então ela tem precedência — o que filtramos é o jargão.
+ */
+function humanize(status: number, raw: string | null): string {
+  if (raw && ehApresentavel(raw)) return raw;
+
+  switch (status) {
+    case 0:
+      return "Não foi possível falar com o servidor. Verifique se a API está no ar.";
+    case 400:
+      return "Algum campo veio fora do formato esperado. Confira os dados e tente de novo.";
+    case 401:
+      return "Sua sessão expirou. Entre de novo para continuar.";
+    case 403:
+      return "Seu perfil não tem permissão para esta ação. Fale com o responsável pelo sistema.";
+    case 404:
+      return "Não encontramos esse registro. Ele pode ter sido removido ou alterado.";
+    case 409:
+      return "Esse registro foi alterado por outra pessoa enquanto você trabalhava. Recarregue a página.";
+    case 422:
+      return "Os dados enviados não passaram na validação do servidor.";
+    case 429:
+      return "Muitas tentativas seguidas. Espere alguns instantes e tente de novo.";
+    default:
+      if (status >= 500) {
+        return "O servidor falhou ao processar. Tente de novo; se persistir, avise a TI.";
+      }
+      return `Não foi possível concluir (erro ${status}).`;
+  }
+}
+
+/// Jargão que não deve chegar ao usuário: as frases padrão do Nest/HTTP em
+/// inglês e as linhas de validação do class-validator.
+const JARGAO = [
+  /^(bad request|unauthorized|forbidden|not found|conflict|internal server error)/i,
+  /forbidden resource/i,
+  /^request failed/i,
+  /must be a|should not be empty|must not be|is not a valid/i,
+  /^\w+\.\w+/,
+];
+
+function ehApresentavel(mensagem: string): boolean {
+  if (mensagem.length > 180) return false;
+  return !JARGAO.some((padrao) => padrao.test(mensagem));
 }
 
 async function renew(): Promise<string | null> {

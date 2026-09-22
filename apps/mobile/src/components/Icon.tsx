@@ -15,6 +15,7 @@ export type IconName =
   | 'check'
   | 'swap'
   | 'doc'
+  | 'calendar'
   | 'alert'
   | 'bell'
   | 'moon'
@@ -112,6 +113,13 @@ function paths(
         <>
           <Path {...s} d="M6.5 3.5h7l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z" />
           <Path {...s} d="M13.5 3.5V8H18M8.5 12.5h7M8.5 16h5" />
+        </>
+      );
+    case 'calendar':
+      return (
+        <>
+          <Rect {...s} x="3.5" y="5" width="17" height="15" rx="2.5" />
+          <Path {...s} d="M3.5 10h17M8.5 3.5v3M15.5 3.5v3" />
         </>
       );
     case 'alert':

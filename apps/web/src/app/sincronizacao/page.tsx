@@ -41,7 +41,7 @@ export default function SyncPage() {
                 <Icon name="sync" className="h-5 w-5 text-turin-ink" />
               </div>
               <div className="min-w-[260px] flex-1">
-                <h2 className="text-[15px] font-600 text-ink">
+                <h2 className="text-[15px] font-semibold text-ink">
                   Leitura pelo proxy Analista-DP
                 </h2>
                 <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
@@ -90,7 +90,7 @@ export default function SyncPage() {
           ) : null}
 
           <div>
-            <h2 className="mb-3 font-display text-[20px] font-700 text-ink">Histórico</h2>
+            <h2 className="mb-3 font-display text-[20px] font-bold text-ink">Histórico</h2>
 
             {runs.isLoading ? (
               <Card className="space-y-3">

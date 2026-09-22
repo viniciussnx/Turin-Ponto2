@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { fonts, radius, spacing } from '../../src/theme/tokens';
+import { fonts, radius, spacing, ALTURA_ABAS } from '../../src/theme/tokens';
 import { Icon } from '../../src/components/Icon';
 import { BrandHeader, Card, EmptyState, Tag, UnderlineTabs } from '../../src/components/layout';
 import {
@@ -69,11 +69,11 @@ export default function PedidosScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl,
+          paddingBottom: insets.bottom + ALTURA_ABAS + spacing.lg,
           gap: spacing.sm,
         }}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={c.brand} />
+          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={c.brandAction} />
         }
       >
         {error ? (
@@ -83,7 +83,7 @@ export default function PedidosScreen() {
         ) : null}
 
         {loading && items.length === 0 ? (
-          <ActivityIndicator color={c.brand} style={{ marginTop: spacing.xxl }} />
+          <ActivityIndicator color={c.brandAction} style={{ marginTop: spacing.xxl }} />
         ) : visible.length === 0 ? (
           <EmptyState
             icon="inbox"
