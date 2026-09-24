@@ -1,13 +1,161 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, Switch, Text, View, type ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, ScrollView, Text, View, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { brandGradient, fonts, radius, spacing, MIN_TOQUE } from '../theme/tokens';
+import { eyebrow, fonts, radius, MIN_TOQUE } from '../theme/tokens';
 import { Icon, type IconName } from './Icon';
+import { IconButton } from './ui';
 
-/// Cabeçalho verde em degradê — o mesmo das telas 02, 03 e 09 do protótipo.
+/*
+ * Blocos de layout do protótipo "Turin Transports Ponto App" (Claude Design).
+ * Medidas em pontos, iguais aos px do protótipo (a moldura dele tem 390 de
+ * largura, a mesma de um iPhone).
+ */
+
+/// Cabeçalho branco das telas internas: botão voltar de 40 pt (raio 12,
+/// borda `--line`) + título `600 17px`; ou, nas abas, só o título `700 18px`.
+export function TopBar({
+  title,
+  onBack,
+  right,
+  big,
+  children,
+  border = true,
+  fundo,
+}: {
+  title: string;
+  onBack?: () => void;
+  right?: ReactNode;
+  /// Título de aba (sem voltar): `font:700 18px; letter-spacing:-.02em`.
+  big?: boolean;
+  children?: ReactNode;
+  border?: boolean;
+  fundo?: string;
+}) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      style={{
+        backgroundColor: fundo ?? c.surface,
+        paddingTop: insets.top + 6,
+        paddingHorizontal: 18,
+        paddingBottom: children ? 16 : 14,
+        borderBottomWidth: border ? 1 : 0,
+        borderBottomColor: c.line,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
+        {onBack ? <IconButton name="chevron-left" label="Voltar" onPress={onBack} /> : null}
+        <Text
+          accessibilityRole="header"
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            color: c.text,
+            fontFamily: big ? fonts.bold : fonts.semibold,
+            fontSize: big ? 18 : 17,
+            letterSpacing: big ? -0.36 : 0,
+          }}
+        >
+          {title}
+        </Text>
+        {right}
+      </View>
+      {children ? <View style={{ marginTop: 12 }}>{children}</View> : null}
+    </View>
+  );
+}
+
+/// Casca padrão: cabeçalho + conteúdo rolável sobre `--bg` + rodapé opcional
+/// fixo (`background:var(--surface); border-top:1px solid var(--line)`).
+export function Screen({
+  title,
+  subtitle,
+  right,
+  headerExtra,
+  children,
+  footer,
+  big,
+  onBack,
+  semVoltar,
+  aba,
+  gap = 14,
+  headerBorder = true,
+}: {
+  title: string;
+  /// Texto curto à direita do título (ex.: "Semana 37").
+  subtitle?: string;
+  right?: ReactNode;
+  headerExtra?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  big?: boolean;
+  onBack?: () => void;
+  semVoltar?: boolean;
+  /// Tela de aba: reserva a altura da barra de abas no fim do scroll.
+  aba?: boolean;
+  gap?: number;
+  headerBorder?: boolean;
+  /// Compatibilidade com as telas antigas; o protótipo não usa.
+  compactHeader?: boolean;
+}) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const voltar = semVoltar ? undefined : (onBack ?? (router.canGoBack() ? () => router.back() : undefined));
+
+  const direita =
+    right ??
+    (subtitle ? (
+      <Text style={{ color: c.muted, fontFamily: fonts.medium, fontSize: 13 }}>{subtitle}</Text>
+    ) : null);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar title={title} onBack={voltar} right={direita} big={big} border={headerBorder}>
+        {headerExtra}
+      </TopBar>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 18,
+          paddingTop: 16,
+          paddingBottom: footer || aba ? 18 : insets.bottom + 24,
+          gap,
+        }}
+      >
+        {children}
+      </ScrollView>
+      {footer ? <Footer>{footer}</Footer> : null}
+    </View>
+  );
+}
+
+/// Rodapé fixo das telas de detalhe (botões de ação).
+export function Footer({ children, semBorda }: { children: ReactNode; semBorda?: boolean }) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={{
+        paddingHorizontal: 18,
+        paddingTop: 16,
+        paddingBottom: Math.max(insets.bottom, 14) + 16,
+        backgroundColor: semBorda ? 'transparent' : c.surface,
+        borderTopWidth: semBorda ? 0 : 1,
+        borderTopColor: c.line,
+        gap: 9,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/// Cabeçalho verde sólido (home e perfil): `background:#0BAF29`.
 export function BrandHeader({
   title,
   subtitle,
@@ -15,128 +163,79 @@ export function BrandHeader({
   onBack,
   children,
   compact,
+  fundo,
 }: {
-  title: string;
+  title?: string;
   subtitle?: string;
   right?: ReactNode;
   onBack?: () => void;
   children?: ReactNode;
-  /// Menos respiro embaixo, para quando um card se sobrepõe ao cabeçalho.
   compact?: boolean;
+  fundo?: string;
 }) {
+  const { c } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <LinearGradient
-      colors={[...brandGradient]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1.4 }}
+    <View
       style={{
-        paddingTop: insets.top + spacing.md,
-        paddingHorizontal: spacing.xl,
-        paddingBottom: compact ? spacing.xxl + spacing.xl : spacing.xl,
+        backgroundColor: fundo ?? c.brand,
+        paddingTop: insets.top + 6,
+        paddingHorizontal: 22,
+        paddingBottom: compact ? 30 : 26,
+        overflow: 'hidden',
       }}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 34,
-        }}
-      >
-        {onBack ? (
-          <Pressable onPress={onBack} hitSlop={12} accessibilityLabel="Voltar">
-            <Icon name="chevron-left" color="#FFFFFF" size={26} />
-          </Pressable>
-        ) : (
-          <View style={{ width: 26 }} />
-        )}
-        {right ?? <View style={{ width: 26 }} />}
-      </View>
-
-      {/* Sem `toUpperCase`: o caixa alta em títulos é o tique de template, e
-          em português ele ainda atrapalha a leitura de nomes próprios longos
-          como "MARIA APARECIDA DOS SANTOS". `accessibilityRole="header"` dá a
-          navegação por cabeçalho no VoiceOver. */}
-      <Text
-        accessibilityRole="header"
-        numberOfLines={2}
-        style={{
-          marginTop: spacing.md,
-          color: '#FFFFFF',
-          fontFamily: fonts.display,
-          fontSize: 28,
-        }}
-      >
-        {title}
-      </Text>
+      {title || onBack || right ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
+          {onBack ? (
+            <Pressable onPress={onBack} hitSlop={12} accessibilityLabel="Voltar">
+              <Icon name="chevron-left" color="#FFFFFF" size={24} />
+            </Pressable>
+          ) : null}
+          {title ? (
+            <Text
+              accessibilityRole="header"
+              numberOfLines={2}
+              style={{ flex: 1, color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 18, letterSpacing: -0.36 }}
+            >
+              {title}
+            </Text>
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
+          {right}
+        </View>
+      ) : null}
       {subtitle ? (
         <Text
           style={{
-            marginTop: 2,
+            marginTop: 6,
             color: 'rgba(255,255,255,0.82)',
             fontFamily: fonts.regular,
-            fontSize: 14,
+            fontSize: 13,
           }}
         >
           {subtitle}
         </Text>
       ) : null}
       {children}
-    </LinearGradient>
-  );
-}
-
-/// Casca padrão das telas internas: cabeçalho + conteúdo rolável.
-export function Screen({
-  title,
-  subtitle,
-  right,
-  headerExtra,
-  children,
-  compactHeader,
-}: {
-  title: string;
-  subtitle?: string;
-  right?: ReactNode;
-  headerExtra?: ReactNode;
-  children: ReactNode;
-  compactHeader?: boolean;
-}) {
-  const { c } = useTheme();
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-
-  return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <BrandHeader
-        title={title}
-        subtitle={subtitle}
-        right={right}
-        compact={compactHeader}
-        onBack={router.canGoBack() ? () => router.back() : undefined}
-      >
-        {headerExtra}
-      </BrandHeader>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxl }}
-      >
-        {children}
-      </ScrollView>
     </View>
   );
 }
 
+/// Cartão: `background:var(--surface); border:1px solid var(--line2);
+/// border-radius:18px`.
 export function Card({
   children,
   style,
   highlighted,
+  sombra,
 }: {
   children: ReactNode;
   style?: ViewStyle;
   highlighted?: boolean;
+  sombra?: boolean;
 }) {
   const { c } = useTheme();
   return (
@@ -144,11 +243,20 @@ export function Card({
       style={[
         {
           backgroundColor: c.surface,
-          borderRadius: radius.lg,
+          borderRadius: radius.xl,
           borderWidth: 1,
-          borderColor: highlighted ? c.brandLine : c.line,
-          padding: spacing.lg,
+          borderColor: highlighted ? c.brandLine : c.line2,
+          padding: 16,
         },
+        sombra
+          ? {
+              shadowColor: c.shadow,
+              shadowOpacity: 0.5,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 3,
+            }
+          : null,
         style,
       ]}
     >
@@ -157,37 +265,50 @@ export function Card({
   );
 }
 
-/*
- * Rótulo de seção.
- *
- * Era caixa alta de 11 pt com 1,4 de entrelinha, na cor `muted` — três
- * problemas de uma vez: 11 pt é o piso absoluto do HIG e o versalete o faz
- * parecer menor; `muted` reprovava em contraste; e o versalete espaçado era
- * o tique visual que fazia cada tela do app parecer a mesma tela de template.
- *
- * Agora é 13 pt, peso semibold, sentence case, em `text2`. A hierarquia vem
- * do peso e da cor — que é como o iOS faz.
- */
-export function SectionLabel({ children, style }: { children: string; style?: ViewStyle }) {
+/// Linha divisória entre itens de uma lista dentro de um `Card`.
+export function Divider({ tracejada }: { tracejada?: boolean }) {
   const { c } = useTheme();
   return (
-    <Text
-      accessibilityRole="header"
-      style={[
-        {
-          color: c.text2,
-          fontFamily: fonts.semibold,
-          fontSize: 13,
-        },
-        style as never,
-      ]}
-    >
-      {children}
-    </Text>
+    <View
+      style={{
+        height: 0,
+        borderTopWidth: 1,
+        borderTopColor: tracejada ? c.line : c.line2,
+        borderStyle: tracejada ? 'dashed' : 'solid',
+      }}
+    />
   );
 }
 
-/// Filtros em pílula (telas 05 e 09).
+/// Rótulo de seção em versalete: `font:600 11px; letter-spacing:.16em;
+/// text-transform:uppercase; color:var(--muted)`.
+export function SectionLabel({
+  children,
+  style,
+  right,
+}: {
+  children: string;
+  style?: ViewStyle;
+  right?: ReactNode;
+}) {
+  const { c } = useTheme();
+  return (
+    <View
+      style={[
+        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 4 },
+        style,
+      ]}
+    >
+      <Text accessibilityRole="header" style={eyebrow(c.muted)}>
+        {children}
+      </Text>
+      {right}
+    </View>
+  );
+}
+
+/// Filtros em pílula (gestor): `height:34px; padding:0 13px; border-radius:10px;
+/// font:600 12.5px`. Ativo: `--brand` com texto branco.
 export function ChipFilters<T extends string>({
   options,
   value,
@@ -200,11 +321,7 @@ export function ChipFilters<T extends string>({
   const { c } = useTheme();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}
-    >
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7 }}>
       {options.map((option) => {
         const active = option === value;
         return (
@@ -213,23 +330,22 @@ export function ChipFilters<T extends string>({
             onPress={() => onChange(option)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
+            hitSlop={{ top: 5, bottom: 5 }}
             style={{
-              backgroundColor: active ? c.brandAction : c.surface,
+              height: 34,
+              paddingHorizontal: 13,
+              borderRadius: radius.sm,
               borderWidth: 1,
-              borderColor: active ? c.brandAction : c.line,
-              borderRadius: radius.pill,
-              paddingHorizontal: spacing.lg,
-              // 7 pt de respiro dava uma pílula de ~30 pt de altura. O piso do
-              // HIG é 44, e estes filtros ficam lado a lado num carrossel.
-              minHeight: MIN_TOQUE,
+              borderColor: active ? c.brand : c.line,
+              backgroundColor: active ? c.brand : c.surface,
               justifyContent: 'center',
             }}
           >
             <Text
               style={{
-                color: active ? c.onBrand : c.text2,
+                color: active ? '#FFFFFF' : c.text2,
                 fontFamily: fonts.semibold,
-                fontSize: 13,
+                fontSize: 12.5,
               }}
             >
               {option}
@@ -241,7 +357,8 @@ export function ChipFilters<T extends string>({
   );
 }
 
-/// Abas sublinhadas (tela 07).
+/// Abas sublinhadas (solicitações): `gap:20px; font:600 14px;
+/// border-bottom:2.5px solid var(--brand)` na ativa.
 export function UnderlineTabs<T extends string>({
   options,
   value,
@@ -254,7 +371,7 @@ export function UnderlineTabs<T extends string>({
   const { c } = useTheme();
 
   return (
-    <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.line }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 20 }}>
       {options.map((option) => {
         const active = option === value;
         return (
@@ -264,61 +381,126 @@ export function UnderlineTabs<T extends string>({
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
+              paddingTop: 10,
+              paddingBottom: 12,
               minHeight: MIN_TOQUE,
-              paddingVertical: spacing.md,
-              borderBottomWidth: 2,
-              borderBottomColor: active ? c.brandAction : 'transparent',
+              borderBottomWidth: 2.5,
+              borderBottomColor: active ? c.brand : 'transparent',
             }}
           >
-            <Text
-              style={{
-                color: active ? c.text : c.muted,
-                fontFamily: fonts.semibold,
-                fontSize: 13,
-              }}
-            >
+            <Text style={{ color: active ? c.text : c.muted, fontFamily: fonts.semibold, fontSize: 14 }}>
               {option}
             </Text>
           </Pressable>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
-/// Pílula de status: "Em jornada", "Aprovado", "Em análise"…
-export function Tag({ text, tone }: { text: string; tone: 'ok' | 'warn' | 'bad' | 'neutral' }) {
+export type Tone = 'ok' | 'warn' | 'bad' | 'neutral';
+
+export function useToneColors() {
   const { c } = useTheme();
-  // Os fundos de warn e bad eram rgba() cravados no código e não mudavam no
-  // tema escuro — "Aprovado" e "Recusado" ficavam ilegíveis à noite, que são
-  // justamente os dois estados que o motorista mais precisa ler. Agora saem
-  // dos tokens, que têm valor próprio em cada tema.
-  const map = {
-    ok: { bg: c.okSoft, ink: c.ok },
-    warn: { bg: c.warnSoft, ink: c.warn },
-    bad: { bg: c.badSoft, ink: c.bad },
-    neutral: { bg: c.surface2, ink: c.text2 },
-  }[tone];
+  return (tone: Tone) =>
+    ({
+      ok: { bg: c.brandSoft, ink: c.brandInk, line: c.brandLine },
+      warn: { bg: c.warnSoft, ink: c.warn, line: c.warnLine },
+      bad: { bg: c.badSoft, ink: c.bad, line: 'rgba(214,69,69,0.30)' },
+      neutral: { bg: c.surface2, ink: c.muted, line: c.line },
+    })[tone];
+}
+
+/// Etiqueta de status: `height:26px; padding:0 10px; border-radius:8px;
+/// font:600 11px; letter-spacing:.04em`. `caixaAlta` é a variante com borda
+/// do histórico de ajustes (tela 15).
+export function Tag({
+  text,
+  tone,
+  caixaAlta,
+  ponto,
+}: {
+  text: string;
+  tone: Tone;
+  caixaAlta?: boolean;
+  /// Bolinha à esquerda (ex.: "Em jornada").
+  ponto?: boolean;
+}) {
+  const { c } = useTheme();
+  const map = useToneColors()(tone);
 
   return (
     <View
       style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        height: caixaAlta ? 24 : 26,
+        paddingHorizontal: caixaAlta ? 9 : 10,
+        borderRadius: caixaAlta ? 7 : 8,
         backgroundColor: map.bg,
-        borderRadius: radius.pill,
-        paddingHorizontal: spacing.md,
-        paddingVertical: 4,
+        borderWidth: caixaAlta || ponto ? 1 : 0,
+        borderColor: map.line,
         alignSelf: 'flex-start',
       }}
     >
-      <Text style={{ color: map.ink, fontFamily: fonts.semibold, fontSize: 12 }}>{text}</Text>
+      {ponto ? (
+        <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: tone === 'ok' ? c.brand : map.ink }} />
+      ) : null}
+      <Text
+        style={{
+          color: map.ink,
+          fontFamily: caixaAlta ? fonts.bold : fonts.semibold,
+          fontSize: caixaAlta ? 10 : ponto ? 12 : 11,
+          letterSpacing: caixaAlta ? 10 * 0.14 : ponto ? 0 : 11 * 0.04,
+          textTransform: caixaAlta ? 'uppercase' : 'none',
+        }}
+      >
+        {text}
+      </Text>
     </View>
   );
 }
 
-/// Linha de lista com ícone, título, subtítulo e chevron (telas 08 e 11).
+/// Quadrado de ícone tonalizado (listas de solicitações e notificações).
+export function IconChip({
+  icon,
+  tone = 'neutral',
+  size = 36,
+  cor,
+}: {
+  icon: IconName;
+  tone?: Tone | 'brand';
+  size?: number;
+  cor?: string;
+}) {
+  const { c } = useTheme();
+  const tones = useToneColors();
+  const map =
+    tone === 'brand'
+      ? { bg: c.surface2, ink: c.brandInk }
+      : tone === 'neutral'
+        ? { bg: c.surface2, ink: c.text2 }
+        : tones(tone);
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size * 0.31),
+        backgroundColor: map.bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Icon name={icon} color={cor ?? map.ink} size={Math.round(size * 0.52)} strokeWidth={1.9} />
+    </View>
+  );
+}
+
+/// Linha de lista do perfil: ícone em quadrado de 34 pt, título `600 14px`,
+/// subtítulo `400 12px` e chevron.
 export function ListRow({
   icon,
   title,
@@ -335,12 +517,6 @@ export function ListRow({
   iconTone?: 'brand' | 'warn' | 'bad' | 'neutral';
 }) {
   const { c } = useTheme();
-  const tone = {
-    brand: { bg: c.brandSoft, ink: c.brandInk },
-    warn: { bg: 'rgba(217,138,0,0.12)', ink: c.warn },
-    bad: { bg: 'rgba(214,69,69,0.10)', ink: c.bad },
-    neutral: { bg: c.surface2, ink: c.text2 },
-  }[iconTone ?? 'neutral'];
 
   return (
     <Pressable
@@ -350,87 +526,80 @@ export function ListRow({
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.md,
-        paddingVertical: spacing.md,
-        opacity: pressed && onPress ? 0.6 : 1,
+        gap: 13,
+        paddingVertical: 15,
+        paddingHorizontal: 16,
+        backgroundColor: pressed && onPress ? c.surface2 : 'transparent',
       })}
     >
-      <View
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: radius.md,
-          backgroundColor: tone.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon name={icon} color={tone.ink} size={20} />
-      </View>
-
+      <IconChip icon={icon} tone={iconTone ?? 'brand'} size={34} />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 15 }}>{title}</Text>
+        <Text style={{ color: iconTone === 'bad' ? c.bad : c.text, fontFamily: fonts.semibold, fontSize: 14 }}>
+          {title}
+        </Text>
         {subtitle ? (
-          <Text
-            style={{
-              marginTop: 1,
-              color: c.muted,
-              fontFamily: fonts.regular,
-              fontSize: 13,
-              lineHeight: 18,
-            }}
-          >
-            {subtitle}
-          </Text>
+          <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 12, marginTop: 1 }}>{subtitle}</Text>
         ) : null}
       </View>
-
-      {right ?? (onPress ? <Icon name="chevron-right" color={c.muted} size={20} /> : null)}
+      {right ?? (onPress ? <Icon name="chevron-right" color={c.text} size={18} strokeWidth={1.9} /> : null)}
     </Pressable>
   );
 }
 
-/*
- * Interruptor das preferências.
- *
- * Usa o `Switch` nativo em vez da pílula desenhada à mão. A pílula anterior
- * separava ligado de desligado só pela cor do trilho, e o botão branco sobre
- * o trilho cinza dava 1,24:1 — praticamente invisível. Pior: quem tem
- * deuteranopia (~6% dos homens, e a frota da Turin é majoritariamente
- * masculina) não distinguia verde de cinza.
- *
- * `color.md › Supporting accessibility` é direto: *"Avoid relying solely on
- * color to differentiate between objects, indicate interactivity, or
- * communicate essential information."* O `Switch` do sistema já traz a
- * separação por posição, o contorno, o comportamento de arrastar, o alvo de
- * toque correto e o papel de acessibilidade — e acompanha as preferências de
- * contraste e movimento do aparelho sem código nosso.
- */
+/// Interruptor do protótipo: trilho 46×28 raio 16, botão branco de 22 pt com
+/// sombra. Ligado: `--brand`; desligado: `--line`.
 export function Toggle({
   value,
   onChange,
   label,
+  disabled,
 }: {
   value: boolean;
   onChange: (v: boolean) => void;
-  /// Rótulo acessível. Sem ele o interruptor é anunciado só como "ativado".
   label?: string;
+  disabled?: boolean;
 }) {
   const { c } = useTheme();
 
   return (
-    <Switch
-      value={value}
-      onValueChange={onChange}
+    <Pressable
+      onPress={() => onChange(!value)}
+      disabled={disabled}
+      accessibilityRole="switch"
       accessibilityLabel={label}
-      trackColor={{ false: c.line, true: c.brandAction }}
-      thumbColor={c.surface}
-      ios_backgroundColor={c.line}
-    />
+      accessibilityState={{ checked: value, disabled }}
+      hitSlop={8}
+      style={{
+        width: 46,
+        height: 28,
+        borderRadius: 16,
+        padding: 3,
+        flexDirection: 'row',
+        justifyContent: value ? 'flex-end' : 'flex-start',
+        backgroundColor: value ? c.brand : c.line,
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000000',
+          shadowOpacity: 0.22,
+          shadowRadius: 2.5,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
+        }}
+      />
+    </Pressable>
   );
 }
 
-/// Bloco de número grande + rótulo (resumo do mês e painel do gestor).
+/// Caixa de número do detalhe do dia: `padding:12px 14px; border-radius:14px;
+/// background:var(--surface2)`; rótulo `600 9px .12em`, valor `700 20px`.
+/// `tone="brand"` é o saldo positivo (fundo `--brand-soft`, borda `--brand-line`).
 export function StatTile({
   value,
   label,
@@ -441,17 +610,42 @@ export function StatTile({
   tone?: 'default' | 'brand' | 'warn' | 'bad';
 }) {
   const { c } = useTheme();
-  const ink = {
-    default: c.text,
-    brand: c.brandInk,
-    warn: c.warn,
-    bad: c.bad,
-  }[tone ?? 'default'];
+  const t = tone ?? 'default';
+  const fundo = t === 'brand' ? c.brandSoft : t === 'warn' ? c.warnSoft : t === 'bad' ? c.badSoft : c.surface2;
+  const borda = t === 'brand' ? c.brandLine : t === 'warn' ? c.warnLine : t === 'bad' ? 'rgba(214,69,69,0.30)' : 'transparent';
+  const tinta = t === 'brand' ? c.brandInk : t === 'warn' ? c.warn : t === 'bad' ? c.bad : c.text;
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ color: ink, fontFamily: fonts.mono, fontSize: 24 }}>{value}</Text>
-      <Text style={{ color: c.muted, fontFamily: fonts.medium, fontSize: 12 }}>{label}</Text>
+    <View
+      style={{
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        borderRadius: radius.lg,
+        backgroundColor: fundo,
+        borderWidth: 1,
+        borderColor: borda,
+      }}
+    >
+      <Text
+        style={{
+          ...eyebrow(t === 'default' ? c.muted : tinta, 9),
+          letterSpacing: 9 * 0.12,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          marginTop: 2,
+          color: tinta,
+          fontFamily: fonts.bold,
+          fontSize: 20,
+          letterSpacing: -0.4,
+        }}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -460,28 +654,17 @@ export function EmptyState({ icon, title, detail }: { icon: IconName; title: str
   const { c } = useTheme();
 
   return (
-    <View style={{ alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm }}>
-      <View
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: 30,
-          backgroundColor: c.surface2,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon name={icon} color={c.muted} size={26} />
-      </View>
-      <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 16 }}>{title}</Text>
+    <View style={{ alignItems: 'center', paddingVertical: 28, gap: 8 }}>
+      <IconChip icon={icon} size={52} />
+      <Text style={{ marginTop: 4, color: c.text, fontFamily: fonts.semibold, fontSize: 15 }}>{title}</Text>
       {detail ? (
         <Text
           style={{
             color: c.muted,
             fontFamily: fonts.regular,
-            fontSize: 14,
+            fontSize: 13,
+            lineHeight: 19,
             textAlign: 'center',
-            lineHeight: 20,
             maxWidth: 280,
           }}
         >
@@ -492,34 +675,65 @@ export function EmptyState({ icon, title, detail }: { icon: IconName; title: str
   );
 }
 
-/// Aviso de dado ainda não vindo do servidor. Deixa explícito na própria tela
-/// o que é estrutura pronta esperando backend — melhor que número inventado
-/// passando por real.
-export function ProvisionalNotice({ children }: { children: string }) {
+/// Aviso em caixa (tela 06 "Divergência de jornada", tela 17 "Atenção",
+/// tela 14 com o sino): `padding:13px 14px; border-radius:15px`.
+export function Aviso({
+  titulo,
+  texto,
+  tom = 'warn',
+  icon,
+}: {
+  titulo?: string;
+  texto: string;
+  tom?: 'warn' | 'brand' | 'bad';
+  icon?: IconName;
+}) {
   const { c } = useTheme();
+  const cores =
+    tom === 'brand'
+      ? { bg: c.brandSoft, line: c.brandLine, ink: c.text }
+      : tom === 'bad'
+        ? { bg: c.badSoft, line: 'rgba(214,69,69,0.30)', ink: c.bad }
+        : { bg: 'rgba(217,138,0,0.10)', line: c.warnLine, ink: c.warn };
+
   return (
     <View
       style={{
         flexDirection: 'row',
-        gap: spacing.sm,
-        backgroundColor: 'rgba(217,138,0,0.10)',
-        borderRadius: radius.md,
-        padding: spacing.md,
         alignItems: 'flex-start',
+        gap: 11,
+        paddingVertical: 13,
+        paddingHorizontal: 14,
+        borderRadius: 15,
+        backgroundColor: cores.bg,
+        borderWidth: 1,
+        borderColor: cores.line,
       }}
     >
-      <Icon name="alert" color={c.warn} size={18} />
-      <Text
-        style={{
-          flex: 1,
-          color: c.warn,
-          fontFamily: fonts.medium,
-          fontSize: 12,
-          lineHeight: 17,
-        }}
-      >
-        {children}
-      </Text>
+      <View style={{ marginTop: 1 }}>
+        <Icon name={icon ?? (tom === 'brand' ? 'bell' : 'alert')} color={c.text} size={20} strokeWidth={1.9} />
+      </View>
+      <View style={{ flex: 1 }}>
+        {titulo ? (
+          <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 13 }}>{titulo}</Text>
+        ) : null}
+        <Text
+          style={{
+            marginTop: titulo ? 2 : 0,
+            color: tom === 'brand' ? c.text2 : c.text2,
+            fontFamily: fonts.regular,
+            fontSize: titulo ? 12 : 13,
+            lineHeight: titulo ? 17.4 : 19,
+          }}
+        >
+          {texto}
+        </Text>
+      </View>
     </View>
   );
+}
+
+/// Aviso de dado ainda não vindo do servidor.
+export function ProvisionalNotice({ children }: { children: string }) {
+  return <Aviso titulo="Dados de demonstração" texto={children} tom="warn" />;
 }

@@ -47,24 +47,22 @@ function Navigation() {
           animation: 'fade',
         }}
       >
-        {/*
-         * Registrar ponto é uma AÇÃO, não uma seção do app — e era uma aba.
-         * Isso criava três problemas de uma vez: a barra de abas ficava por
-         * cima da câmera na hora da foto; bater ponto custava dois toques em
-         * dois botões idênticos (o da home levava à aba, a aba tinha o botão
-         * de verdade); e cinco abas apertavam os rótulos.
-         *
-         * `navigation-and-search.md` reserva a barra de abas para seções do
-         * mesmo nível que a pessoa alterna. Uma tarefa com começo, meio e fim
-         * é modal: ela cobre a tela, tem saída explícita e devolve ao ponto de
-         * partida. O botão da home agora dispara a ação direto.
-         */}
+        {/* Telas 12 e 13: o fluxo de registro cobre a tela inteira, sem abas. */}
         <Stack.Screen
           name="registrar"
           options={{
             presentation: 'fullScreenModal',
             animation: 'slide_from_bottom',
             gestureEnabled: false,
+          }}
+        />
+        {/* Tela 16: folha sobre a lista de solicitações. */}
+        <Stack.Screen
+          name="solicitacao/[id]"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            contentStyle: { backgroundColor: 'transparent' },
           }}
         />
       </Stack>

@@ -1,9 +1,9 @@
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
-/// Ícones do protótipo, redesenhados como traço em SVG.
-///
-/// Os nomes espelham o sprite do arquivo de design (`#ic-home`, `#ic-clock`…)
-/// para que dê para conferir tela contra tela sem tradução mental.
+/// Ícones do protótipo, com os traços copiados do sprite `<symbol id="ic-…">`
+/// de `design/Meu Ponto Turin.dc.html` (viewBox 24, traço 1,8, pontas
+/// arredondadas). Os nomes são os do app; o comentário ao lado é o id no
+/// protótipo, para conferir tela contra tela.
 export type IconName =
   | 'home'
   | 'clock'
@@ -29,7 +29,12 @@ export type IconName =
   | 'plus'
   | 'camera'
   | 'lock'
-  | 'logout';
+  | 'logout'
+  | 'eye'
+  | 'eye-off'
+  | 'filter'
+  | 'cloud'
+  | 'x';
 
 interface IconProps {
   name: IconName;
@@ -38,8 +43,35 @@ interface IconProps {
   strokeWidth?: number;
 }
 
+const D: Record<Exclude<IconName, 'clock' | 'pin' | 'user' | 'camera' | 'eye' | 'eye-off'>, string> = {
+  home: 'M3 10.6 12 3.2l9 7.4V21h-6.2v-6.1H9.2V21H3z', // ic-home
+  mirror: 'M3.6 5.6h16.8v14.8H3.6zM3.6 9.8h16.8M8 3v4.4M16 3v4.4M8.6 14.6l2.2 2.2 4.4-4.4', // ic-mirror
+  inbox: 'M3.4 13.4h5l1.2 2.2h4.8l1.2-2.2h5M3.4 13.4 6.4 4.6h11.2l3 8.8v6H3.4z', // ic-inbox
+  bell: 'M18 16.2v-4.8a6 6 0 0 0-12 0v4.8l-2 2h16zM10 20.2a2 2 0 0 0 4 0', // ic-bell
+  'chevron-left': 'M14.8 4.8 7.6 12l7.2 7.2', // ic-chev-l
+  'chevron-right': 'M9.2 4.8 16.4 12l-7.2 7.2', // ic-chev-r
+  'chevron-down': 'M4.8 9.2 12 16.4l7.2-7.2', // ic-chev-d
+  'chevron-up': 'M4.8 14.8 12 7.6l7.2 7.2', // ic-chev-u
+  check: 'M4.4 12.6 9.4 17.6 19.8 6.8', // ic-check
+  plus: 'M12 5v14M5 12h14', // ic-plus
+  alert: 'M12 3.4 2.8 20.2h18.4zM12 9.4v4.6M12 17.2h.02', // ic-alert
+  bus: 'M4.4 4.6h15.2v11.2H4.4zM4.4 9.4h15.2M7.4 15.8v2.6M16.6 15.8v2.6M8 12.8h.02M16 12.8h.02', // ic-bus
+  moon: 'M20.2 14.4A8.4 8.4 0 1 1 9.6 3.8a7.2 7.2 0 0 0 10.6 10.6z', // ic-moon
+  logout: 'M14.4 4h5.2v16h-5.2M10.8 8.2 6.6 12.4l4.2 4.2M6.6 12.4h9.2', // ic-out
+  doc: 'M6.2 3.2h7.6l4 4v13.6H6.2zM13.8 3.2v4h4M9.2 13h5.6M9.2 16.6h5.6', // ic-doc
+  coffee: 'M3.8 7.6h12.4v4.2a5 5 0 0 1-5 5h-2.4a5 5 0 0 1-5-5zM16.2 8.6h1.8a2.1 2.1 0 0 1 0 4.8h-1.8M3 20.6h14', // ic-coffee
+  shield: 'M12 3.2l7 2.9v6c0 4.6-3 7.7-7 9.1-4-1.4-7-4.5-7-9.1v-6zM9 12.2l2.2 2.2 4-4', // ic-shield
+  filter: 'M4 6.6h16M7 12h10M10 17.4h4', // ic-filter
+  face: 'M8.6 3.6H3.6v5M15.4 3.6h5v5M8.6 20.4H3.6v-5M15.4 20.4h5v-5M9.4 10h.02M14.6 10h.02M9.6 14.6c1.4 1.2 3.4 1.2 4.8 0', // ic-face
+  swap: 'M3.8 8.4h14.4l-3.4-3.4M20.2 15.6H5.8l3.4 3.4', // ic-swap
+  lock: 'M5.6 10.4h12.8v9.8H5.6zM8.6 10.4V7.8a3.4 3.4 0 0 1 6.8 0v2.6M12 14v2.6', // ic-lock
+  calendar: 'M4 5.8h16v14.4H4zM4 10h16M8.4 3.2v4.4M15.6 3.2v4.4', // ic-cal
+  cloud: 'M7.4 18.4h9.8a3.6 3.6 0 0 0 .4-7.2 5.4 5.4 0 0 0-10.4-1.2 3.7 3.7 0 0 0 .2 8.4z', // ic-cloud
+  x: 'M6.4 6.4l11.2 11.2M17.6 6.4 6.4 17.6', // ic-x
+};
+
 export function Icon({ name, color, size = 22, strokeWidth = 1.8 }: IconProps) {
-  const common = {
+  const s = {
     stroke: color,
     strokeWidth,
     strokeLinecap: 'round' as const,
@@ -49,146 +81,40 @@ export function Icon({ name, color, size = 22, strokeWidth = 1.8 }: IconProps) {
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      {paths(name, common, color)}
+      {name === 'clock' ? (
+        // ic-clock
+        <>
+          <Circle {...s} cx="12" cy="12" r="8.6" />
+          <Path {...s} d="M12 7.2V12l3.6 2.1" />
+        </>
+      ) : name === 'pin' ? (
+        // ic-pin
+        <>
+          <Path {...s} d="M12 21.2s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z" />
+          <Circle {...s} cx="12" cy="9.8" r="2.6" />
+        </>
+      ) : name === 'user' ? (
+        // ic-user
+        <>
+          <Circle {...s} cx="12" cy="8" r="3.6" />
+          <Path {...s} d="M4.8 20.4c1.4-3.6 4-5.4 7.2-5.4s5.8 1.8 7.2 5.4" />
+        </>
+      ) : name === 'camera' ? (
+        // ic-cam
+        <>
+          <Path {...s} d="M3.6 8h3.2l1.6-2.2h7.2L17.2 8h3.2v11.4H3.6z" />
+          <Circle {...s} cx="12" cy="13.6" r="3.2" />
+        </>
+      ) : name === 'eye' || name === 'eye-off' ? (
+        // ic-eye (+ traço diagonal quando a senha está oculta)
+        <>
+          <Path {...s} d="M2.6 12S6 6.4 12 6.4 21.4 12 21.4 12 18 17.6 12 17.6 2.6 12 2.6 12z" />
+          <Circle {...s} cx="12" cy="12" r="2.8" />
+          {name === 'eye-off' ? <Path {...s} d="M4 20 20 4" /> : null}
+        </>
+      ) : (
+        <Path {...s} d={D[name]} />
+      )}
     </Svg>
   );
-}
-
-function paths(
-  name: IconName,
-  s: Record<string, unknown>,
-  color: string,
-): React.ReactNode {
-  switch (name) {
-    case 'home':
-      return <Path {...s} d="M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5M9.5 20v-6h5v6" />;
-    case 'clock':
-      return (
-        <>
-          <Circle {...s} cx="12" cy="12" r="8.5" />
-          <Path {...s} d="M12 7v5.2l3.4 2" />
-        </>
-      );
-    case 'mirror':
-      return (
-        <>
-          <Rect {...s} x="3.5" y="4.5" width="17" height="15" rx="2.5" />
-          <Path {...s} d="M3.5 9.5h17M9 9.5V19.5M14.5 4.5v15" />
-        </>
-      );
-    case 'inbox':
-      return (
-        <>
-          <Path {...s} d="M3.5 13.5 6 5.5h12l2.5 8v5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z" />
-          <Path {...s} d="M3.5 13.5h4l1.2 2.4h6.6l1.2-2.4h4" />
-        </>
-      );
-    case 'user':
-      return (
-        <>
-          <Circle {...s} cx="12" cy="8.5" r="3.8" />
-          <Path {...s} d="M4.8 20c.7-3.6 3.7-5.6 7.2-5.6s6.5 2 7.2 5.6" />
-        </>
-      );
-    case 'pin':
-      return (
-        <>
-          <Path {...s} d="M12 21c4-4.4 6-7.6 6-10.2A6 6 0 0 0 6 10.8C6 13.4 8 16.6 12 21z" />
-          <Circle {...s} cx="12" cy="10.6" r="2.3" />
-        </>
-      );
-    case 'face':
-      return (
-        <>
-          <Path {...s} d="M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5" />
-          <Path {...s} d="M9.3 10.5v1.2M14.7 10.5v1.2M9.4 15c1.5 1.2 3.7 1.2 5.2 0" />
-        </>
-      );
-    case 'check':
-      return <Path {...s} d="m5 12.5 4.5 4.5L19 7.5" />;
-    case 'swap':
-      return <Path {...s} d="M4 8.5h13M13.5 5l3.5 3.5-3.5 3.5M20 15.5H7M10.5 12 7 15.5l3.5 3.5" />;
-    case 'doc':
-      return (
-        <>
-          <Path {...s} d="M6.5 3.5h7l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5z" />
-          <Path {...s} d="M13.5 3.5V8H18M8.5 12.5h7M8.5 16h5" />
-        </>
-      );
-    case 'calendar':
-      return (
-        <>
-          <Rect {...s} x="3.5" y="5" width="17" height="15" rx="2.5" />
-          <Path {...s} d="M3.5 10h17M8.5 3.5v3M15.5 3.5v3" />
-        </>
-      );
-    case 'alert':
-      return (
-        <>
-          <Path {...s} d="M12 4.2 21 19.5H3z" />
-          <Path {...s} d="M12 10v4" />
-          <Circle cx="12" cy="16.8" r="1" fill={color} />
-        </>
-      );
-    case 'bell':
-      return (
-        <>
-          <Path {...s} d="M6.5 17V10.5a5.5 5.5 0 0 1 11 0V17l1.5 2.2h-14z" />
-          <Path {...s} d="M10.2 19.2a2 2 0 0 0 3.6 0" />
-        </>
-      );
-    case 'moon':
-      return <Path {...s} d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" />;
-    case 'shield':
-      return (
-        <>
-          <Path {...s} d="M12 3.4 19 6v6c0 4-3 7.2-7 8.6-4-1.4-7-4.6-7-8.6V6z" />
-          <Path {...s} d="m9.2 12 2 2 3.6-3.8" />
-        </>
-      );
-    case 'coffee':
-      return (
-        <>
-          <Path {...s} d="M4.5 9h12v6.5a3.5 3.5 0 0 1-3.5 3.5H8a3.5 3.5 0 0 1-3.5-3.5z" />
-          <Path {...s} d="M16.5 10.5H18a2.5 2.5 0 0 1 0 5h-1.5M7.5 3.5v2.2M11 3.5v2.2M14.5 3.5v2.2" />
-        </>
-      );
-    case 'bus':
-      return (
-        <>
-          <Rect {...s} x="4" y="4" width="16" height="12.5" rx="2.5" />
-          <Path {...s} d="M4 10.5h16M8 16.5v2M16 16.5v2" />
-          <Circle cx="8.2" cy="13.5" r="1.1" fill={color} />
-          <Circle cx="15.8" cy="13.5" r="1.1" fill={color} />
-        </>
-      );
-    case 'chevron-down':
-      return <Path {...s} d="m7 10 5 5 5-5" />;
-    case 'chevron-up':
-      return <Path {...s} d="m7 14 5-5 5 5" />;
-    case 'chevron-right':
-      return <Path {...s} d="m10 7 5 5-5 5" />;
-    case 'chevron-left':
-      return <Path {...s} d="m14 7-5 5 5 5" />;
-    case 'plus':
-      return <Path {...s} d="M12 5.5v13M5.5 12h13" />;
-    case 'camera':
-      return (
-        <>
-          <Path {...s} d="M4 8.5h3.5L9 6h6l1.5 2.5H20v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z" />
-          <Circle {...s} cx="12" cy="13.2" r="3.4" />
-        </>
-      );
-    case 'lock':
-      return (
-        <>
-          <Rect {...s} x="5" y="10.5" width="14" height="9.5" rx="2" />
-          <Path {...s} d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7" />
-        </>
-      );
-    case 'logout':
-      return <Path {...s} d="M14 7.5V5.5A1.5 1.5 0 0 0 12.5 4h-6A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20h6a1.5 1.5 0 0 0 1.5-1.5v-2M10 12h9.5M16.5 8.8 20 12l-3.5 3.2" />;
-    default:
-      return null;
-  }
 }

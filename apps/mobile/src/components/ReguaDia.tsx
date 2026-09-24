@@ -83,7 +83,7 @@ export function ReguaDia({
             width: `${Math.max((bloco.fim - bloco.inicio) * 100, 1.2)}%`,
             top: 0,
             bottom: 0,
-            backgroundColor: bloco.aberto ? c.warn : c.brandAction,
+            backgroundColor: bloco.aberto ? c.warn : c.brand,
             borderRadius: radius.pill,
           }}
         />
@@ -101,7 +101,7 @@ export function EixoRegua() {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
       {horas.map((hora) => (
-        <Text key={hora} style={{ color: c.muted, fontFamily: fonts.mono, fontSize: 10 }}>
+        <Text key={hora} style={{ color: c.muted, fontFamily: fonts.semibold, fontSize: 10 }}>
           {String(hora).padStart(2, '0')}h
         </Text>
       ))}

@@ -1,373 +1,319 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { brandGradient, fonts, radius, spacing, ALTURA_ABAS, MIN_TOQUE } from '../../src/theme/tokens';
-import { useScale } from '../../src/theme/useScale';
-import { PrimaryButton, TurinLogo } from '../../src/components/ui';
-import { Icon } from '../../src/components/Icon';
-import { DAY_SLOTS, buttonLabelForKind, useToday } from '../../src/punch/useToday';
+import { useBarraClara } from '../../src/theme/useBarraClara';
+import { eyebrow, fonts, radius } from '../../src/theme/tokens';
+import { Avatar, PrimaryButton, TurinLogo } from '../../src/components/ui';
+import { Tag } from '../../src/components/layout';
+import { Icon, type IconName } from '../../src/components/Icon';
+import { DAY_SLOTS, useToday } from '../../src/punch/useToday';
+import { useTimesheet } from '../../src/api/timesheet';
+import { getShiftWeek } from '../../src/api/roster';
 
 /// Tela 03 do protótipo — home do colaborador.
 export default function HomeScreen() {
   const { c } = useTheme();
+  useBarraClara();
   const insets = useSafeAreaInsets();
-  const { empilhar } = useScale();
   const router = useRouter();
   const { employee } = useAuth();
-  const { punches, pending, loading, nextKind, reload } = useToday();
+  const { punches, pending, loading, reload } = useToday();
 
   const [now, setNow] = useState(() => new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const ano = now.getFullYear();
+  const numeroMes = now.getMonth();
+  const mes = useMemo(() => new Date(ano, numeroMes, 1), [ano, numeroMes]);
+  const { data: espelho, reload: recarregarEspelho } = useTimesheet(mes);
 
-  // O relógio grande do card precisa andar. De minuto em minuto basta — o
-  // protótipo mostra "07:18", sem segundos.
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
 
+  const hojeIso = toIsoDay(now);
+  const escalaHoje = getShiftWeek(now).days.find((day) => day.date === hojeIso);
   const working = punches.length % 2 === 1;
+
+  const saldo = espelho?.totals.balanceMinutes ?? null;
+  const progresso = espelho && espelho.totals.expectedMinutes > 0
+    ? Math.min(espelho.totals.workedMinutes / espelho.totals.expectedMinutes, 1)
+    : 0;
+
+  const nome = (employee?.name ?? '').split(' ').filter(Boolean).slice(0, 2).join(' ');
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: c.bg }}
-      contentContainerStyle={{ paddingBottom: insets.bottom + ALTURA_ABAS + spacing.lg }}
+      contentContainerStyle={{ paddingBottom: 18 }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          tintColor={c.brandAction}
+          tintColor="#FFFFFF"
+          progressBackgroundColor={c.brand}
           onRefresh={async () => {
             setRefreshing(true);
-            await reload();
+            await Promise.all([reload(), recarregarEspelho()]);
             setRefreshing(false);
           }}
         />
       }
     >
-      <LinearGradient
-        colors={[...brandGradient]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1.4 }}
-        style={{
-          paddingTop: insets.top + spacing.md,
-          paddingHorizontal: spacing.xl,
-          paddingBottom: spacing.xxl + spacing.xl,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <TurinLogo color="#FFFFFF" width={116} />
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+      {/* Cabeçalho verde: `background:#0BAF29; padding:6px 22px 26px`. */}
+      <View style={{ backgroundColor: c.brand, paddingTop: insets.top + 6, paddingHorizontal: 22, paddingBottom: 26 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44 }}>
+          <TurinLogo color="#FFFFFF" width={104} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
               onPress={() => router.push('/notificacoes')}
-              hitSlop={10}
+              accessibilityRole="button"
               accessibilityLabel="Notificações"
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 20,
-                backgroundColor: 'rgba(255,255,255,0.18)',
+                borderRadius: radius.md,
+                backgroundColor: 'rgba(255,255,255,0.16)',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Icon name="bell" color="#FFFFFF" size={21} />
-              {/* Marcador de não lidas. Vira contagem real quando o servidor
-                  passar a enviar notificações. */}
+              <Icon name="bell" color="#FFFFFF" size={21} strokeWidth={1.7} />
               <View
                 style={{
                   position: 'absolute',
-                  top: 9,
-                  right: 10,
-                  width: 8,
-                  height: 8,
+                  top: 8,
+                  right: 9,
+                  width: 7,
+                  height: 7,
                   borderRadius: 4,
-                  backgroundColor: '#FFD84D',
+                  backgroundColor: '#FFD34D',
+                  borderWidth: 1.5,
+                  borderColor: c.brand,
                 }}
               />
             </Pressable>
-
-            <Pressable onPress={() => router.push('/perfil')} accessibilityLabel="Perfil">
-              <Avatar name={employee?.name ?? ''} />
+            <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button" accessibilityLabel="Perfil">
+              <Avatar name={employee?.name ?? ''} size={40} raio={12} tinta="#08871F" />
             </Pressable>
           </View>
         </View>
 
-        <Text
-          style={{
-            marginTop: spacing.xl,
-            color: 'rgba(255,255,255,0.85)',
-            fontFamily: fonts.regular,
-            fontSize: 15,
-          }}
-        >
+        <Text style={{ marginTop: 16, color: 'rgba(255,255,255,0.82)', fontFamily: fonts.regular, fontSize: 15 }}>
           {greeting(now)},
         </Text>
-        <Text
-          style={{
-            color: '#FFFFFF',
-            fontFamily: fonts.display,
-            fontSize: 30,
-            letterSpacing: 0.4,
-          }}
-        >
-          {employee?.name ?? ''}
+        <Text style={{ color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 25, lineHeight: 27.5, letterSpacing: -0.5 }}>
+          {nome}
         </Text>
-
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
-          {employee?.position ? <Chip text={employee.position} /> : null}
-          <Chip text={`Matrícula ${employee?.registration ?? ''}`} />
+        <View style={{ marginTop: 8, flexDirection: 'row', gap: 7, flexWrap: 'wrap' }}>
+          {escalaHoje?.line ? <HeaderChip icon="bus" text={`Linha ${escalaHoje.line}`} /> : null}
+          <HeaderChip text={`Matrícula ${employee?.registration ?? ''}`} />
         </View>
-      </LinearGradient>
-
-      {/* Card do relógio, sobreposto ao degradê como no protótipo. */}
-      <View
-        style={{
-          marginTop: -spacing.xxl,
-          marginHorizontal: spacing.lg,
-          backgroundColor: c.surface,
-          borderRadius: radius.xl,
-          padding: spacing.xl,
-          gap: spacing.lg,
-          shadowColor: c.shadow,
-          shadowOpacity: 1,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 12 },
-          elevation: 6,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Text
-            style={{
-              color: c.muted,
-              fontFamily: fonts.semibold,
-              fontSize: 13,
-            }}
-          >
-            {`Agora · ${formatDay(now)}`}
-          </Text>
-          <StatusPill working={working} />
-        </View>
-
-        <Text
-          style={{
-            color: c.text,
-            // O relógio é número, e número lê como instrumento na mono — a
-            // mesma família do espelho e do painel.
-            fontFamily: fonts.mono,
-            fontSize: 48,
-            lineHeight: 56,
-          }}
-        >
-          {formatTime(now)}
-        </Text>
-
-        <PrimaryButton
-          label={buttonLabelForKind(nextKind)}
-          onPress={() => router.push('/registrar')}
-        />
-
-        {pending > 0 ? (
-          <Text
-            style={{
-              color: c.warn,
-              fontFamily: fonts.medium,
-              fontSize: 13,
-              textAlign: 'center',
-            }}
-          >
-            {pending === 1
-              ? '1 marcação aguardando envio'
-              : `${pending} marcações aguardando envio`}
-          </Text>
-        ) : null}
       </View>
 
-      {/* Marcações de hoje */}
-      <View style={{ padding: spacing.lg, gap: spacing.md }}>
+      <View style={{ paddingHorizontal: 18, marginTop: -14, gap: 14 }}>
+        {/* Card do relógio: `border-radius:20px; padding:20px`. */}
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            backgroundColor: c.surface,
+            borderRadius: 20,
+            padding: 20,
+            borderWidth: 1,
+            borderColor: c.line2,
+            shadowColor: c.shadow,
+            shadowOpacity: 0.6,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 4,
           }}
         >
-          <Text
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <View>
+              <Text style={eyebrow(c.muted)}>{`Agora · ${formatDay(now)}`}</Text>
+              <Text style={{ color: c.text, fontFamily: fonts.bold, fontSize: 44, lineHeight: 48, letterSpacing: -0.88 }}>
+                {formatTime(now)}
+              </Text>
+            </View>
+            <Tag text={working ? 'Em jornada' : 'Fora de jornada'} tone={working ? 'ok' : 'neutral'} ponto />
+          </View>
+
+          <View
             style={{
-              color: c.muted,
-              fontFamily: fonts.semibold,
-              fontSize: 13,
+              marginTop: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+              borderRadius: radius.lg,
+              backgroundColor: c.surface2,
             }}
           >
-            Marcações de hoje
-          </Text>
-          <Pressable
-            onPress={() => router.push('/espelho')}
-            accessibilityRole="button"
-            accessibilityLabel="Ver o espelho de ponto do mês"
-            style={{ minHeight: MIN_TOQUE, justifyContent: 'center' }}
-          >
-            <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 15 }}>
-              Ver detalhe
+            <Icon name="pin" color={c.text} size={20} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 14 }}>
+                {escalaHoje?.origin ?? 'Sem escala hoje'}
+              </Text>
+              <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 12 }}>
+                {escalaHoje?.origin ? 'Local de início da escala de hoje' : 'Folga programada'}
+              </Text>
+            </View>
+          </View>
+
+          <PrimaryButton
+            label="Marcar ponto"
+            iconName="clock"
+            onPress={() => router.push('/ponto')}
+            sombra={false}
+            style={{ marginTop: 14 }}
+          />
+
+          {pending > 0 ? (
+            <Text style={{ marginTop: 10, color: c.warn, fontFamily: fonts.medium, fontSize: 12, textAlign: 'center' }}>
+              {pending === 1 ? '1 marcação aguardando envio' : `${pending} marcações aguardando envio`}
             </Text>
-          </Pressable>
+          ) : null}
         </View>
 
-        {/*
-         * Quatro células lado a lado cabem em tamanho padrão. A partir de
-         * ~135% de Dynamic Type cada uma fica com ~70 pt de largura e
-         * "ENTRADA"/"ALMOÇO" quebram em três linhas ou somem — então viram
-         * grade 2×2. É o "stacked layout" que `typography.md › Supporting
-         * Dynamic Type` recomenda para linha horizontal apertada.
-         */}
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: empilhar ? 'wrap' : 'nowrap',
-            gap: spacing.sm,
-          }}
-        >
-          {DAY_SLOTS.map((slot, index) => (
-            <View
-              key={slot.kind}
-              style={empilhar ? { width: '48%', flexGrow: 1 } : { flex: 1 }}
+        {/* Marcações de hoje */}
+        <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, marginHorizontal: 4, marginBottom: 9 }}>
+            <Text style={eyebrow(c.muted)}>Marcações de hoje</Text>
+            <Pressable onPress={() => router.push(`/dia/${hojeIso}`)} hitSlop={12} accessibilityRole="button">
+              <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 12 }}>Ver detalhe</Text>
+            </Pressable>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {DAY_SLOTS.map((slot, index) => {
+              const punch = punches[index];
+              return (
+                <View
+                  key={slot.kind}
+                  style={{
+                    flex: 1,
+                    backgroundColor: c.surface,
+                    borderWidth: 1,
+                    borderColor: c.line2,
+                    borderRadius: radius.lg,
+                    paddingVertical: 11,
+                    paddingHorizontal: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text numberOfLines={1} style={{ ...eyebrow(c.muted, 9), letterSpacing: 0.9, height: 22 }}>
+                    {slot.label}
+                  </Text>
+                  <Text style={{ color: c.text, fontFamily: fonts.bold, fontSize: 17, letterSpacing: -0.34 }}>
+                    {loading ? '··' : punch ? formatTime(new Date(punch.punchedAt)) : '--:--'}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Banco de horas + escala de hoje */}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.line2, borderRadius: radius.xl, padding: 15 }}>
+            <Text style={{ ...eyebrow(c.muted, 10), letterSpacing: 1.4 }}>Banco de horas</Text>
+            <Text
+              style={{
+                marginTop: 5,
+                color: saldo !== null && saldo < 0 ? c.bad : c.brandInk,
+                fontFamily: fonts.bold,
+                fontSize: 24,
+                lineHeight: 26,
+                letterSpacing: -0.48,
+              }}
             >
-              <SlotCell
-                label={slot.label}
-                time={punches[index] ? formatTime(new Date(punches[index].punchedAt)) : null}
-                loading={loading}
-              />
+              {espelho ? comSinal(espelho.totals.balance, saldo ?? 0) : '--:--'}
+            </Text>
+            <View style={{ marginTop: 10, height: 5, borderRadius: 3, backgroundColor: c.line, overflow: 'hidden' }}>
+              <View style={{ height: '100%', width: `${Math.round(progresso * 100)}%`, backgroundColor: c.brand, borderRadius: 3 }} />
             </View>
-          ))}
+          </View>
+          <View style={{ flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.line2, borderRadius: radius.xl, padding: 15 }}>
+            <Text style={{ ...eyebrow(c.muted, 10), letterSpacing: 1.4 }}>Escala de hoje</Text>
+            <Text style={{ marginTop: 5, color: c.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 20, letterSpacing: -0.36 }}>
+              {escalaHoje?.window ? escalaHoje.window.replace(' – ', '–') : 'Folga'}
+            </Text>
+            <Text style={{ marginTop: 6, color: c.muted, fontFamily: fonts.regular, fontSize: 12 }}>
+              {escalaHoje?.vehicle ? `${escalaHoje.shiftName} · Veículo ${escalaHoje.vehicle}` : 'Escala 6x1'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Atalhos */}
+        <View style={{ flexDirection: 'row', gap: 9 }}>
+          <Atalho icon="swap" label="Ajuste" onPress={() => router.push('/nova-solicitacao')} />
+          <Atalho icon="doc" label="Atestado" onPress={() => router.push('/nova-solicitacao?tipo=JUSTIFY_ABSENCE')} />
+          <Atalho icon="mirror" label="Escala" onPress={() => router.push('/escala')} />
         </View>
       </View>
     </ScrollView>
   );
 }
 
-function Chip({ text }: { text: string }) {
-  return (
-    <View
-      style={{
-        backgroundColor: 'rgba(255,255,255,0.18)',
-        borderRadius: radius.sm,
-        paddingHorizontal: spacing.md,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 13 }}>{text}</Text>
-    </View>
-  );
-}
-
-function StatusPill({ working }: { working: boolean }) {
-  const { c } = useTheme();
-  const color = working ? c.brandAction : c.muted;
-
+function HeaderChip({ text, icon }: { text: string; icon?: IconName }) {
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: working ? c.brandSoft : c.surface2,
-        borderRadius: radius.pill,
-        paddingHorizontal: spacing.md,
-        paddingVertical: 5,
+        height: 26,
+        paddingHorizontal: 10,
+        borderRadius: 7,
+        backgroundColor: 'rgba(255,255,255,0.16)',
       }}
     >
-      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
-      <Text style={{ color, fontFamily: fonts.semibold, fontSize: 13 }}>
-        {working ? 'Em jornada' : 'Fora de jornada'}
-      </Text>
+      {icon ? <Icon name={icon} color="#FFFFFF" size={14} strokeWidth={1.9} /> : null}
+      <Text style={{ color: '#FFFFFF', fontFamily: fonts.semibold, fontSize: 12 }}>{text}</Text>
     </View>
   );
 }
 
-function SlotCell({
-  label,
-  time,
-  loading,
-}: {
-  label: string;
-  time: string | null;
-  loading: boolean;
-}) {
+function Atalho({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const { c } = useTheme();
-
   return (
-    <View
-      style={{
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => ({
         flex: 1,
+        height: 48,
+        borderRadius: 13,
         backgroundColor: c.surface,
-        borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: c.line,
-        paddingVertical: spacing.md,
-        alignItems: 'center',
-        gap: 4,
-      }}
-    >
-      <Text
-        style={{
-          color: c.muted,
-          fontFamily: fonts.semibold,
-          fontSize: 12,
-        }}
-      >
-        {label}
-      </Text>
-      <Text
-        style={{
-          color: time ? c.text : c.muted,
-          fontFamily: fonts.display,
-          fontSize: 20,
-        }}
-      >
-        {loading ? '··' : (time ?? '--:--')}
-      </Text>
-    </View>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-
-  return (
-    <View
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: '#FFFFFF',
+        borderColor: pressed ? c.brand : c.line2,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-      }}
+        gap: 8,
+      })}
     >
-      <Text style={{ color: '#0BAF29', fontFamily: fonts.bold, fontSize: 15 }}>{initials}</Text>
-    </View>
+      {({ pressed }) => (
+        <>
+          <Icon name={icon} color={pressed ? c.brandInk : c.text2} size={18} />
+          <Text style={{ color: pressed ? c.brandInk : c.text2, fontFamily: fonts.semibold, fontSize: 13 }}>{label}</Text>
+        </>
+      )}
+    </Pressable>
   );
+}
+
+function comSinal(texto: string, minutos: number): string {
+  if (texto.startsWith('+') || texto.startsWith('-') || texto.startsWith('−')) return texto;
+  return minutos > 0 ? `+${texto}` : texto;
+}
+
+function toIsoDay(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function greeting(now: Date): string {
@@ -381,10 +327,10 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+/// "qui, 12 set" — o protótipo escreve em minúsculas e o versalete sobe.
 function formatDay(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-  });
+  return date
+    .toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+    .replace(/\./g, '')
+    .replace(' de ', ' ');
 }

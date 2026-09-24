@@ -2,196 +2,156 @@ import { useMemo } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { fonts, spacing } from '../../src/theme/tokens';
-import { Icon } from '../../src/components/Icon';
-import { PrimaryButton } from '../../src/components/ui';
-import { Card, EmptyState, Screen, SectionLabel } from '../../src/components/layout';
-import { EixoRegua, ReguaDia } from '../../src/components/ReguaDia';
-import { dayTag, useTimesheet, weekdayLabel, type TimesheetDay } from '../../src/api/timesheet';
+import { fonts } from '../../src/theme/tokens';
+import { PrimaryButton, SecondaryButton } from '../../src/components/ui';
+import { Aviso, Card, EmptyState, Screen, SectionLabel, StatTile } from '../../src/components/layout';
+import { useTimesheet, type TimesheetPunch } from '../../src/api/timesheet';
 import { labelForKind } from '../../src/punch/useToday';
 import type { PunchKind } from '../../src/punch/queue';
 
-/// Tela 06 do protótipo — detalhe do dia, com a linha do tempo das marcações.
+/// Tela 06 do protótipo — detalhe do dia + solicitar ajuste.
 export default function DayDetailScreen() {
   const { c } = useTheme();
   const router = useRouter();
   const { data: isoDate } = useLocalSearchParams<{ data: string }>();
 
-  // Reaproveita a apuração do mês inteiro: o espelho provavelmente já a
-  // carregou, e a API não tem rota de dia isolado.
+  // Reaproveita a apuração do mês inteiro: a API não tem rota de dia isolado.
   const month = useMemo(() => new Date(`${isoDate}T12:00:00`), [isoDate]);
   const { data, loading } = useTimesheet(month);
-
   const day = data?.days.find((item) => item.date === isoDate);
 
   return (
     <Screen
-      title={day ? `${weekdayLabel(day.weekday)}, ${formatDay(isoDate)}` : formatDay(isoDate)}
-      subtitle={day ? summary(day) : undefined}
+      title={tituloDoDia(isoDate)}
+      headerExtra={
+        day ? (
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
+            <StatTile label="Trabalhadas" value={day.worked} />
+            <StatTile label="Previstas" value={day.expected} />
+            <StatTile
+              label="Saldo"
+              value={day.balanceMinutes === 0 ? '00:00' : comSinal(day.balance, day.balanceMinutes)}
+              tone={day.balanceMinutes > 0 ? 'brand' : day.balanceMinutes < 0 ? 'bad' : 'default'}
+            />
+          </View>
+        ) : undefined
+      }
+      footer={
+        day ? (
+          <>
+            <PrimaryButton
+              label="Solicitar ajuste"
+              iconName="swap"
+              sombra={false}
+              onPress={() => router.push(`/nova-solicitacao?data=${isoDate}`)}
+            />
+            <SecondaryButton
+              label="Anexar atestado ou justificativa"
+              iconName="doc"
+              onPress={() => router.push(`/nova-solicitacao?data=${isoDate}&tipo=JUSTIFY_ABSENCE`)}
+            />
+          </>
+        ) : undefined
+      }
     >
       {loading && !day ? (
-        <ActivityIndicator color={c.brandAction} style={{ marginTop: spacing.xxl }} />
+        <ActivityIndicator color={c.brand} style={{ marginTop: 28 }} />
       ) : !day ? (
         <EmptyState icon="alert" title="Dia não encontrado" />
       ) : (
-        <View style={{ gap: spacing.lg }}>
-          <Card>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Metric label="Trabalhado" value={day.worked} />
-              <Metric label="Previsto" value={day.expected} />
-              <Metric
-                label="Saldo"
-                value={day.balanceMinutes === 0 ? '—' : day.balance}
-                tone={day.balanceMinutes > 0 ? 'ok' : day.balanceMinutes < 0 ? 'bad' : 'muted'}
-              />
-            </View>
-          </Card>
-
+        <>
           {day.inconsistencies.length > 0 ? (
-            <Card highlighted>
-              <SectionLabel>Pendências</SectionLabel>
-              <View style={{ marginTop: spacing.sm, gap: spacing.sm }}>
-                {day.inconsistencies.map((item) => (
-                  <View
-                    key={item.code}
-                    style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
-                  >
-                    <Icon name="alert" color={c.warn} size={18} />
-                    <Text
-                      style={{
-                        flex: 1,
-                        color: c.text2,
-                        fontFamily: fonts.regular,
-                        fontSize: 14,
-                        lineHeight: 20,
-                      }}
-                    >
-                      {item.message}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
+            <Aviso
+              titulo="Divergência de jornada"
+              texto={`${day.inconsistencies.map((item) => item.message).join('. ')}. Sujeita a validação do RH.`}
+            />
           ) : null}
 
-          <View style={{ gap: spacing.sm }}>
-            <SectionLabel>Marcações</SectionLabel>
+          <View>
+            <SectionLabel style={{ marginBottom: 10 }}>Marcações</SectionLabel>
             {day.punches.length === 0 ? (
               <Card>
                 <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 14 }}>
-                  Nenhuma marcação registrada neste dia.
+                  {day.isRestDay ? 'Folga programada.' : day.isHoliday ? 'Feriado.' : 'Nenhuma marcação registrada neste dia.'}
                 </Text>
               </Card>
             ) : (
-              <Card>
-                {/* No detalhe há largura para a régua com o eixo: ela dá a
-                    forma do dia antes da leitura item a item. */}
-                <View style={{ marginBottom: spacing.lg }}>
-                  <ReguaDia marcacoes={day.punches.map((p) => p.time)} altura={10} />
-                  <EixoRegua />
-                </View>
-
+              <Card style={{ paddingVertical: 6 }}>
                 {day.punches.map((punch, index) => (
-                  <TimelineRow
-                    key={punch.id}
-                    time={punch.time}
-                    label={labelForKind(punch.kind as PunchKind)}
-                    detail={
-                      punch.outsideGeofence
-                        ? 'Fora das áreas cadastradas'
-                        : 'Registrado pelo app'
-                    }
-                    warn={punch.outsideGeofence}
-                    last={index === day.punches.length - 1}
-                  />
+                  <LinhaDoTempo key={punch.id} punch={punch} ultima={index === day.punches.length - 1} />
                 ))}
               </Card>
             )}
           </View>
-
-          <PrimaryButton
-            label="Solicitar ajuste"
-            onPress={() => router.push(`/nova-solicitacao?data=${isoDate}`)}
-          />
-        </View>
+        </>
       )}
     </Screen>
   );
 }
 
-function TimelineRow({
-  time,
-  label,
-  detail,
-  warn,
-  last,
-}: {
-  time: string;
-  label: string;
-  detail: string;
-  warn?: boolean;
-  last?: boolean;
-}) {
+/// Linha da linha do tempo: hora `700 14px` numa coluna de 52 pt, bolinha
+/// de 11 pt com borda `--brand` de 2,5 pt, trilho de 1,5 pt e a etiqueta de
+/// origem em versalete.
+function LinhaDoTempo({ punch, ultima }: { punch: TimesheetPunch; ultima: boolean }) {
   const { c } = useTheme();
+  const fora = punch.outsideGeofence;
 
   return (
-    <View style={{ flexDirection: 'row', gap: spacing.md }}>
-      {/* Trilho da linha do tempo */}
-      <View style={{ alignItems: 'center', width: 14 }}>
+    <View style={{ flexDirection: 'row', gap: 14, paddingVertical: 12 }}>
+      <Text style={{ width: 52, paddingTop: 1, color: c.text, fontFamily: fonts.bold, fontSize: 14, letterSpacing: -0.28 }}>
+        {punch.time}
+      </Text>
+      <View style={{ width: 11, alignItems: 'center' }}>
         <View
           style={{
             width: 11,
             height: 11,
             borderRadius: 6,
-            backgroundColor: warn ? c.warn : c.brandAction,
-            marginTop: 5,
+            borderWidth: 2.5,
+            borderColor: fora ? c.warn : c.brand,
+            backgroundColor: c.surface,
           }}
         />
-        {!last ? <View style={{ flex: 1, width: 2, backgroundColor: c.line }} /> : null}
+        <View style={{ flex: 1, width: 1.5, minHeight: 16, backgroundColor: ultima ? 'transparent' : c.line }} />
       </View>
-
-      <View style={{ flex: 1, paddingBottom: last ? 0 : spacing.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
-          <Text style={{ color: c.text, fontFamily: fonts.mono, fontSize: 19 }}>{time}</Text>
-          <Text style={{ color: c.text2, fontFamily: fonts.semibold, fontSize: 14 }}>
-            {label}
+      <View style={{ flex: 1, paddingBottom: 2 }}>
+        <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 14 }}>
+          {labelForKind(punch.kind as PunchKind)}
+        </Text>
+        <Text style={{ marginTop: 2, color: c.muted, fontFamily: fonts.regular, fontSize: 12 }}>
+          {fora ? 'Fora das áreas cadastradas' : 'Dentro da cerca virtual'}
+        </Text>
+        <View
+          style={{
+            marginTop: 6,
+            alignSelf: 'flex-start',
+            height: 22,
+            paddingHorizontal: 8,
+            borderRadius: 7,
+            backgroundColor: c.surface2,
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: c.muted, fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            {fora ? 'App · fora da cerca' : 'App · GPS'}
           </Text>
         </View>
-        <Text style={{ color: c.muted, fontFamily: fonts.regular, fontSize: 12, marginTop: 1 }}>
-          {detail}
-        </Text>
       </View>
     </View>
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: 'ok' | 'bad' | 'muted';
-}) {
-  const { c } = useTheme();
-  const ink = tone === 'ok' ? c.brandInk : tone === 'bad' ? c.bad : tone === 'muted' ? c.muted : c.text;
-
-  return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ color: ink, fontFamily: fonts.mono, fontSize: 22 }}>{value}</Text>
-      <Text style={{ color: c.muted, fontFamily: fonts.medium, fontSize: 12 }}>{label}</Text>
-    </View>
-  );
+function comSinal(texto: string, minutos: number): string {
+  if (/^[+\-−]/.test(texto)) return texto;
+  return minutos > 0 ? `+${texto}` : texto;
 }
 
-function summary(day: TimesheetDay): string {
-  const tag = dayTag(day);
-  return tag.text;
-}
-
-function formatDay(isoDate: string): string {
+/// "Quarta, 11 de setembro".
+function tituloDoDia(isoDate: string): string {
   if (!isoDate) return '';
-  const [year, month, dayOfMonth] = isoDate.split('-');
-  return `${dayOfMonth}/${month}/${year}`;
+  const date = new Date(`${isoDate}T12:00:00`);
+  const semana = date.toLocaleDateString('pt-BR', { weekday: 'long' }).replace('-feira', '');
+  const resto = date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+  return `${semana.charAt(0).toUpperCase()}${semana.slice(1)}, ${resto}`;
 }
+

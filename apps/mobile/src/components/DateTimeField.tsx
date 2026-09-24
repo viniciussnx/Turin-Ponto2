@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, radius, spacing, MIN_TOQUE } from '../theme/tokens';
-import { useScale } from '../theme/useScale';
+import { eyebrow, fonts, radius } from '../theme/tokens';
 import { Icon } from './Icon';
 
 /*
@@ -44,7 +43,6 @@ export function DateTimeField({
   hint?: string;
 }) {
   const { c } = useTheme();
-  const { alturaMin } = useScale();
   const [mostrar, setMostrar] = useState(false);
 
   const textoValor =
@@ -59,7 +57,7 @@ export function DateTimeField({
 
   return (
     <View style={{ gap: 6 }}>
-      <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: c.text2 }}>{label}</Text>
+      <Text style={{ ...eyebrow(c.muted), letterSpacing: 11 * 0.14, marginBottom: 2 }}>{label}</Text>
 
       <Pressable
         onPress={() => setMostrar((atual) => !atual)}
@@ -72,20 +70,20 @@ export function DateTimeField({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: spacing.sm,
+          gap: 12,
           backgroundColor: c.surface2,
-          borderRadius: radius.md,
-          borderWidth: 1.5,
-          borderColor: mostrar ? c.brandAction : c.line,
-          paddingHorizontal: spacing.md,
-          minHeight: Math.max(alturaMin(52), MIN_TOQUE),
+          borderRadius: radius.lg,
+          borderWidth: mostrar ? 1.5 : 1,
+          borderColor: mostrar ? c.brand : c.line,
+          paddingHorizontal: 16,
+          minHeight: 54,
         }}
       >
         <Text
           style={{
             flex: 1,
             color: c.text,
-            fontFamily: modo === 'time' ? fonts.mono : fonts.medium,
+            fontFamily: fonts.semibold,
             fontSize: 16,
           }}
         >

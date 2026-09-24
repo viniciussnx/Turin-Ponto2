@@ -10,14 +10,17 @@ import {
   type TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/auth/AuthProvider';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { brandGradient, fonts, radius, spacing } from '../src/theme/tokens';
-import { Checkbox, Field, LockIcon, PersonIcon, PrimaryButton, TurinLogo } from '../src/components/ui';
+import { useBarraClara } from '../src/theme/useBarraClara';
+import { eyebrow, fonts, radius } from '../src/theme/tokens';
+import { Checkbox, Field, PrimaryButton, TurinLogo } from '../src/components/ui';
+import { Icon } from '../src/components/Icon';
 
 /// A redefinição passa pelo RH de propósito: o cadastro do Alterdata não traz
-/// e-mail nem celular confiáveis para todos os 203 funcionários, então não há
+/// e-mail nem celular confiáveis para todos os funcionários, então não há
 /// canal seguro para um "enviar link de recuperação".
 function showForgotPassword(): void {
   Alert.alert(
@@ -28,9 +31,20 @@ function showForgotPassword(): void {
   );
 }
 
-/// Tela 02 do protótipo — "BEM-VINDO DE VOLTA".
+/// O botão existe no protótipo; a entrada por biometria ainda não foi
+/// implementada (falta guardar a credencial no Keychain/Keystore).
+function showFaceIdSoon(): void {
+  Alert.alert(
+    'Entrar com Face ID',
+    'A entrada por biometria ainda não está disponível. Use matrícula e senha.',
+    [{ text: 'Entendi' }],
+  );
+}
+
+/// Tela 02 do protótipo — "Bem-vindo de volta".
 export default function LoginScreen() {
   const { c } = useTheme();
+  useBarraClara();
   const insets = useSafeAreaInsets();
   const { signIn, lastRegistration } = useAuth();
 
@@ -64,49 +78,71 @@ export default function LoginScreen() {
     }
   }
 
+  const versao = Constants.expoConfig?.version ?? '1.0.0';
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: c.bg }}
+      style={{ flex: 1, backgroundColor: c.surface }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        bounces={false}
-      >
+      {/* Faixa da barra de status: `background:var(--deep)`. */}
+      <View style={{ height: insets.top, backgroundColor: c.deep }} />
+
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" bounces={false}>
+        {/* `height:196px; background:linear-gradient(160deg,#0BAF29,#06651f 92%)` */}
         <LinearGradient
-          colors={[...brandGradient]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            paddingTop: insets.top + spacing.xxl,
-            paddingBottom: spacing.xxl,
-            paddingHorizontal: spacing.xl,
-            borderBottomLeftRadius: 28,
-            borderBottomRightRadius: 28,
-          }}
+          colors={['#0BAF29', '#06651F']}
+          locations={[0, 0.92]}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.8, y: 1 }}
+          style={{ height: 196, paddingTop: 30, paddingHorizontal: 30, overflow: 'hidden' }}
         >
-          <TurinLogo color="#FFFFFF" width={152} />
-          <Text
+          <View
             style={{
-              marginTop: spacing.xl,
+              position: 'absolute',
+              right: -40,
+              top: -30,
+              width: 200,
+              height: 200,
+              borderRadius: 100,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.22)',
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: 40,
+              width: 130,
+              height: 130,
+              borderRadius: 65,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.16)',
+            }}
+          />
+          <TurinLogo color="#FFFFFF" width={150} />
+          <Text
+            accessibilityRole="header"
+            style={{
+              marginTop: 22,
               color: '#FFFFFF',
-              fontFamily: fonts.display,
-              fontSize: 34,
-              lineHeight: 36,
-              letterSpacing: 0.4,
+              fontFamily: fonts.bold,
+              fontSize: 25,
+              lineHeight: 26.25,
+              letterSpacing: -0.5,
             }}
           >
-            BEM-VINDO{'\n'}DE VOLTA
+            Bem-vindo{'\n'}de volta
           </Text>
         </LinearGradient>
 
-        <View style={{ padding: spacing.xl, gap: spacing.lg, flex: 1 }}>
+        <View style={{ paddingTop: 30, paddingHorizontal: 30, gap: 16, backgroundColor: c.surface }}>
           <Field
             label="Matrícula"
             value={registration}
             onChangeText={setRegistration}
-            leading={<PersonIcon color={c.muted} />}
+            leadingIcon="user"
             keyboardType="number-pad"
             autoCapitalize="none"
             autoComplete="username"
@@ -121,7 +157,7 @@ export default function LoginScreen() {
             label="Senha"
             value={password}
             onChangeText={setPassword}
-            leading={<LockIcon color={c.muted} />}
+            leadingIcon="lock"
             secure
             autoComplete="current-password"
             returnKeyType="go"
@@ -130,48 +166,62 @@ export default function LoginScreen() {
             editable={!loading}
           />
 
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Checkbox
-              checked={keepSignedIn}
-              onChange={setKeepSignedIn}
-              label="Manter conectado"
-            />
-            <Pressable onPress={showForgotPassword} hitSlop={8}>
-              <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 14 }}>
-                Esqueci a senha
-              </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Checkbox checked={keepSignedIn} onChange={setKeepSignedIn} label="Manter conectado" />
+            <Pressable onPress={showForgotPassword} hitSlop={10} accessibilityRole="button">
+              <Text style={{ color: c.brandInk, fontFamily: fonts.semibold, fontSize: 14 }}>Esqueci a senha</Text>
             </Pressable>
           </View>
 
           <PrimaryButton
-            label="ENTRAR"
+            label="Entrar"
             onPress={handleSubmit}
             loading={loading}
             disabled={!canSubmit}
-            style={{ marginTop: spacing.sm }}
+            altura={56}
+            style={{ marginTop: 6 }}
           />
 
-          <Text
-            style={{
-              marginTop: 'auto',
-              paddingTop: spacing.xl,
-              textAlign: 'center',
-              color: c.muted,
-              fontFamily: fonts.regular,
-              fontSize: 13,
-              lineHeight: 19,
-            }}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6, marginBottom: 2 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: c.line }} />
+            <Text style={eyebrow(c.muted)}>ou</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: c.line }} />
+          </View>
+
+          <Pressable
+            onPress={showFaceIdSoon}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              height: 56,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              borderColor: pressed ? c.brand : c.line,
+              backgroundColor: c.surface,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 11,
+            })}
           >
-            Primeiro acesso? Peça a senha inicial ao RH.{'\n'}
-            Você troca por uma senha sua ao entrar.
-          </Text>
+            <Icon name="face" color={c.text} size={22} strokeWidth={1.7} />
+            <Text style={{ color: c.text, fontFamily: fonts.semibold, fontSize: 15 }}>Entrar com Face ID</Text>
+          </Pressable>
         </View>
+
+        <View style={{ flex: 1 }} />
+        <Text
+          style={{
+            paddingTop: 22,
+            paddingHorizontal: 30,
+            paddingBottom: insets.bottom + 30,
+            textAlign: 'center',
+            color: c.muted,
+            fontFamily: fonts.regular,
+            fontSize: 12,
+          }}
+        >
+          {`Turin Transportes · v${versao} · Senha inicial com o RH`}
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

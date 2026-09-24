@@ -11,12 +11,17 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, radius, spacing, MIN_TOQUE } from '../theme/tokens';
-import { useScale, TETO_ROTULO } from '../theme/useScale';
+import { eyebrow, fonts, radius, MIN_TOQUE } from '../theme/tokens';
+import { Icon, type IconName } from './Icon';
 
-/// Marca da Turin. O traço é vazado, então sobre o verde ela aparece em branco
-/// e sobre fundo claro, em verde — o `tintColor` faz esse papel.
-export function TurinLogo({ color, width = 148 }: { color: string; width?: number }) {
+/*
+ * Componentes base, no desenho do protótipo "Turin Transports Ponto App"
+ * (Claude Design). Cada bloco cita o trecho de CSS que reproduz.
+ */
+
+/// Marca da Turin. No protótipo ela vai sempre branca sobre o verde
+/// (`filter: brightness(0) invert(1)`); o `tintColor` faz esse papel.
+export function TurinLogo({ color, width = 150 }: { color: string; width?: number }) {
   return (
     <Image
       source={require('../../assets/turin-logo.webp')}
@@ -29,19 +34,9 @@ export function TurinLogo({ color, width = 148 }: { color: string; width?: numbe
 }
 
 /*
- * Botão principal.
- *
- * Três mudanças em relação ao desenho anterior, todas do relatório:
- *
- * 1. O fundo é `brandAction` (turin-700), não o verde da marca. Branco sobre o
- *    verde da marca dá 2,93:1 e reprova em qualquer tamanho; sobre o 700 dá
- *    6,18:1. O pressionado agora ESCURECE (800, 8,41:1) — antes clareava, e o
- *    botão ficava mais legível apertado do que em repouso.
- *
- * 2. Saiu o caixa alta com entrelinha de 1,1. O iOS usa sentence case em
- *    botão; o versalete espaçado era o que fazia a tela ler como template.
- *
- * 3. `minHeight` cresce com o Dynamic Type em vez de cortar o texto a 200%.
+ * Botão principal: `height:54px; border-radius:14px; background:var(--brand);
+ * font:700 14px; letter-spacing:.14em; text-transform:uppercase;
+ * box-shadow:0 12px 24px -12px rgba(11,175,41,.9)`.
  */
 export function PrimaryButton({
   label,
@@ -49,37 +44,37 @@ export function PrimaryButton({
   loading,
   disabled,
   icon,
+  iconName,
   style,
-  /// Ação destrutiva (cancelar pedido, sair). Muda a cor e o retorno tátil.
   destrutivo,
-  /// Retorno tátil ao tocar. Ligado por padrão em ação primária.
   haptico = true,
+  altura = 54,
+  sombra = true,
 }: {
   label: string;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  /// Elemento livre à esquerda do rótulo.
   icon?: ReactNode;
+  /// Atalho: ícone do sprite, branco, 20 pt.
+  iconName?: IconName;
   style?: ViewStyle;
   destrutivo?: boolean;
   haptico?: boolean;
+  altura?: number;
+  sombra?: boolean;
 }) {
   const { c } = useTheme();
-  const { alturaMin } = useScale();
   const inactive = disabled || loading;
-
   const fundo = destrutivo ? c.bad : c.brandAction;
-  const fundoPressionado = destrutivo ? c.bad : c.brandActionPressed;
-  const tinta = destrutivo ? '#FFFFFF' : c.onBrand;
 
   return (
     <Pressable
       onPress={() => {
         if (haptico) {
           void Haptics.impactAsync(
-            destrutivo
-              ? Haptics.ImpactFeedbackStyle.Heavy
-              : Haptics.ImpactFeedbackStyle.Medium,
+            destrutivo ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium,
           );
         }
         onPress();
@@ -90,30 +85,40 @@ export function PrimaryButton({
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         {
-          backgroundColor: inactive ? c.muted : pressed ? fundoPressionado : fundo,
-          opacity: pressed && destrutivo ? 0.85 : 1,
-          borderRadius: radius.md,
-          minHeight: alturaMin(52),
+          height: altura,
+          borderRadius: radius.lg,
+          backgroundColor: pressed && !destrutivo ? c.brandActionPressed : fundo,
+          opacity: inactive ? 0.55 : pressed && destrutivo ? 0.85 : 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.md,
+          gap: 10,
+          paddingHorizontal: 18,
         },
+        sombra && !inactive
+          ? {
+              shadowColor: destrutivo ? c.bad : '#0BAF29',
+              shadowOpacity: 0.45,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 4,
+            }
+          : null,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={tinta} />
+        <ActivityIndicator color={c.onBrand} />
       ) : (
         <>
-          {icon}
+          {icon ?? (iconName ? <Icon name={iconName} color={c.onBrand} size={20} strokeWidth={2} /> : null)}
           <Text
             style={{
-              color: tinta,
-              fontFamily: fonts.semibold,
-              fontSize: 17,
+              color: c.onBrand,
+              fontFamily: fonts.bold,
+              fontSize: 14,
+              letterSpacing: 14 * 0.14,
+              textTransform: 'uppercase',
             }}
           >
             {label}
@@ -124,21 +129,30 @@ export function PrimaryButton({
   );
 }
 
-/// Botão secundário: contorno, sem preenchimento. Para a ação alternativa ao
-/// lado da primária, onde duas cheias competiriam pelo olho.
+/*
+ * Botão de contorno: `height:50px; border:1px solid var(--line);
+ * border-radius:14px; background:var(--surface); font:600 14px`.
+ * `tom="bad"` é o "Sair da conta" do perfil.
+ */
 export function SecondaryButton({
   label,
   onPress,
   disabled,
   style,
+  iconName,
+  tom = 'default',
+  altura = 50,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   style?: ViewStyle;
+  iconName?: IconName;
+  tom?: 'default' | 'text' | 'bad';
+  altura?: number;
 }) {
   const { c } = useTheme();
-  const { alturaMin } = useScale();
+  const tinta = tom === 'bad' ? c.bad : tom === 'text' ? c.text : c.text2;
 
   return (
     <Pressable
@@ -149,121 +163,186 @@ export function SecondaryButton({
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
         {
-          backgroundColor: pressed ? c.line2 : 'transparent',
-          borderWidth: 1.5,
-          borderColor: c.line,
-          borderRadius: radius.md,
-          minHeight: alturaMin(52),
+          height: altura,
+          borderRadius: radius.lg,
+          borderWidth: 1,
+          borderColor: pressed && tom !== 'bad' ? c.brand : c.line,
+          backgroundColor: pressed && tom === 'bad' ? c.badSoft : c.surface,
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.md,
+          gap: 9,
+          paddingHorizontal: 16,
           opacity: disabled ? 0.5 : 1,
         },
         style,
       ]}
     >
-      <Text style={{ color: c.text2, fontFamily: fonts.semibold, fontSize: 17 }}>{label}</Text>
+      {({ pressed }) => (
+        <>
+          {iconName ? (
+            <Icon
+              name={iconName}
+              color={pressed && tom !== 'bad' ? c.brandInk : tinta}
+              size={19}
+            />
+          ) : null}
+          <Text
+            style={{
+              color: pressed && tom !== 'bad' ? c.brandInk : tinta,
+              fontFamily: fonts.semibold,
+              fontSize: 14,
+            }}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/// Botão quadrado de 40 pt com borda (voltar, filtro, fechar).
+export function IconButton({
+  name,
+  onPress,
+  label,
+  cor,
+  fundo,
+}: {
+  name: IconName;
+  onPress?: () => void;
+  label: string;
+  cor?: string;
+  fundo?: string;
+}) {
+  const { c } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={4}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({
+        width: 40,
+        height: 40,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: c.line,
+        backgroundColor: pressed ? c.surface2 : (fundo ?? c.surface),
+        alignItems: 'center',
+        justifyContent: 'center',
+      })}
+    >
+      <Icon name={name} color={cor ?? c.text} size={20} strokeWidth={1.9} />
     </Pressable>
   );
 }
 
 interface FieldProps extends TextInputProps {
   label: string;
-  /// Ícone à esquerda, como no protótipo (pessoa na matrícula, cadeado na senha).
+  /// Ícone à esquerda: `user` na matrícula, `lock` na senha.
   leading?: ReactNode;
-  /// Habilita o olho de revelar senha.
+  leadingIcon?: IconName;
   secure?: boolean;
   error?: string | null;
 }
 
+/*
+ * Campo do login: rótulo em versalete (`font:600 11px; letter-spacing:.14em`),
+ * caixa de 54 pt com raio 14 sobre `--surface2`. Em foco a borda vira 1,5 pt
+ * `--brand`, o fundo vira `--surface` e ganha o halo de 4 pt `--brand-soft`.
+ */
 export const Field = forwardRef<TextInput, FieldProps>(function Field(
-  { label, leading, secure, error, style, ...props },
+  { label, leading, leadingIcon, secure, error, style, multiline, ...props },
   ref,
 ) {
   const { c } = useTheme();
-  const { alturaMin } = useScale();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const mascarado = secure && !revealed;
+  // No protótipo os ícones do campo saem na cor do texto (o 'stroke' inline
+  // perde para o 'currentColor' do sprite).
+  const corIcone = c.text;
 
   return (
-    <View style={{ gap: 6 }}>
-      {/* O rótulo era caixa alta de 11 pt com 1,4 de entrelinha: abaixo do
-          mínimo de 11 pt do HIG depois do versalete, e o principal tique de
-          "template". Agora é 13 pt em sentence case. */}
-      <Text
-        maxFontSizeMultiplier={TETO_ROTULO}
-        style={{
-          fontFamily: fonts.semibold,
-          fontSize: 13,
-          color: c.text2,
-        }}
-      >
-        {label}
-      </Text>
+    <View>
+      <Text style={{ ...eyebrow(c.muted), letterSpacing: 11 * 0.14, marginBottom: 8 }}>{label}</Text>
 
+      {/* Halo de foco: uma borda externa de 4 pt, como o box-shadow do CSS. */}
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: spacing.sm,
-          backgroundColor: c.surface2,
-          borderRadius: radius.md,
-          borderWidth: 1.5,
-          borderColor: error ? c.bad : focused ? c.brandAction : c.line,
-          paddingHorizontal: spacing.md,
-          minHeight: alturaMin(52),
+          margin: -4,
+          padding: 3,
+          borderRadius: radius.lg + 4,
+          borderWidth: 1,
+          borderColor: focused && !error ? c.brandSoft : 'transparent',
+          backgroundColor: focused && !error ? c.brandSoft : 'transparent',
         }}
       >
-        {leading}
-        <TextInput
-          ref={ref}
-          {...props}
-          // Sem isto o campo é anunciado como "campo de texto" e nada mais: o
-          // rótulo acima é um Text irmão, e o VoiceOver não liga os dois
-          // sozinho como o <label> faz na web.
-          accessibilityLabel={props.accessibilityLabel ?? label}
-          accessibilityHint={error ?? undefined}
-          secureTextEntry={secure && !revealed}
-          onFocus={(event) => {
-            setFocused(true);
-            props.onFocus?.(event);
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: multiline ? 'flex-start' : 'center',
+            gap: 12,
+            minHeight: 54,
+            paddingHorizontal: 16,
+            paddingVertical: multiline ? 12 : 0,
+            borderRadius: radius.lg,
+            borderWidth: focused || error ? 1.5 : 1,
+            borderColor: error ? c.bad : focused ? c.brand : c.line,
+            backgroundColor: focused ? c.surface : c.surface2,
           }}
-          onBlur={(event) => {
-            setFocused(false);
-            props.onBlur?.(event);
-          }}
-          placeholderTextColor={c.muted}
-          style={[
-            {
-              flex: 1,
-              color: c.text,
-              fontFamily: fonts.medium,
-              fontSize: 16,
-              paddingVertical: spacing.md,
-            },
-            style,
-          ]}
-        />
-        {secure ? (
-          <Pressable
-            onPress={() => setRevealed((value) => !value)}
-            // 22 pt de ícone + 11 de folga em cada lado = 44 pt.
-            hitSlop={11}
-            accessibilityRole="button"
-            accessibilityLabel={revealed ? 'Ocultar senha' : 'Mostrar senha'}
-          >
-            <EyeIcon open={revealed} color={c.muted} />
-          </Pressable>
-        ) : null}
+        >
+          {leading ?? (leadingIcon ? <Icon name={leadingIcon} color={corIcone} size={20} strokeWidth={1.7} /> : null)}
+          <TextInput
+            ref={ref}
+            {...props}
+            multiline={multiline}
+            accessibilityLabel={props.accessibilityLabel ?? label}
+            accessibilityHint={error ?? undefined}
+            secureTextEntry={mascarado}
+            onFocus={(event) => {
+              setFocused(true);
+              props.onFocus?.(event);
+            }}
+            onBlur={(event) => {
+              setFocused(false);
+              props.onBlur?.(event);
+            }}
+            placeholderTextColor={c.muted}
+            style={[
+              {
+                flex: 1,
+                color: c.text,
+                fontFamily: mascarado ? fonts.bold : fonts.semibold,
+                fontSize: mascarado ? 18 : 17,
+                letterSpacing: mascarado ? 18 * 0.32 : 17 * 0.04,
+                paddingVertical: multiline ? 0 : 14,
+                minHeight: multiline ? 72 : undefined,
+                textAlignVertical: multiline ? 'top' : 'center',
+              },
+              multiline ? { fontFamily: fonts.regular, fontSize: 15, letterSpacing: 0 } : null,
+              style,
+            ]}
+          />
+          {secure ? (
+            <Pressable
+              onPress={() => setRevealed((value) => !value)}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={revealed ? 'Ocultar senha' : 'Mostrar senha'}
+            >
+              <Icon name={revealed ? 'eye-off' : 'eye'} color={c.text} size={20} strokeWidth={1.7} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
-      {/* `accessibilityLiveRegion` faz o erro ser anunciado no momento em que
-          aparece, em vez de esperar o foco passar por ele. */}
       {error ? (
         <Text
           accessibilityLiveRegion="polite"
-          style={{ color: c.bad, fontFamily: fonts.medium, fontSize: 13 }}
+          style={{ marginTop: 8, color: c.bad, fontFamily: fonts.medium, fontSize: 13 }}
         >
           {error}
         </Text>
@@ -272,7 +351,8 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
   );
 });
 
-/// Caixa de seleção do "Manter conectado".
+/// Caixa de seleção do "Manter conectado": 20 pt, raio 6, preenchida de
+/// `--brand` com o visto branco.
 export function Checkbox({
   checked,
   onChange,
@@ -290,127 +370,83 @@ export function Checkbox({
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked }}
-      // A caixa tem 20 pt; a linha inteira precisa de 44 pt de altura para
-      // virar alvo válido, então o alvo é a linha, não o quadradinho.
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.sm,
-        minHeight: MIN_TOQUE,
-      }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: MIN_TOQUE }}
     >
       <View
         style={{
-          width: 22,
-          height: 22,
+          width: 20,
+          height: 20,
           borderRadius: 6,
-          borderWidth: 2,
-          borderColor: checked ? c.brandAction : c.line,
-          backgroundColor: checked ? c.brandAction : 'transparent',
+          borderWidth: checked ? 0 : 1.5,
+          borderColor: c.line,
+          backgroundColor: checked ? c.brand : c.surface,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        {checked ? (
-          <View
-            style={{
-              width: 9,
-              height: 5,
-              borderLeftWidth: 2,
-              borderBottomWidth: 2,
-              borderColor: c.onBrand,
-              transform: [{ rotate: '-45deg' }, { translateY: -1 }],
-            }}
-          />
-        ) : null}
+        {checked ? <Icon name="check" color="#FFFFFF" size={14} strokeWidth={2.6} /> : null}
       </View>
       <Text style={{ color: c.text2, fontFamily: fonts.medium, fontSize: 14 }}>{label}</Text>
     </Pressable>
   );
 }
 
-/// Ícones desenhados com View em vez de uma biblioteca: são poucos e simples,
-/// e assim o bundle não carrega um pacote de ícones inteiro por causa de três.
-function EyeIcon({ open, color }: { open: boolean; color: string }) {
+/// Iniciais do nome ("Ricardo Alves de Souza" → "RA").
+export function initialsOf(name: string): string {
+  return name
+    .split(' ')
+    .filter((part) => part.length > 2 || /^[A-ZÀ-Ú]/.test(part))
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+/// Avatar quadrado arredondado com iniciais (home, perfil, gestor).
+export function Avatar({
+  name,
+  size = 40,
+  fundo,
+  tinta,
+  raio,
+}: {
+  name: string;
+  size?: number;
+  fundo?: string;
+  tinta?: string;
+  raio?: number;
+}) {
+  const { c } = useTheme();
   return (
-    <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
-      <View
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: raio ?? Math.round(size * 0.3),
+        backgroundColor: fundo ?? '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text
         style={{
-          width: 20,
-          height: 13,
-          borderWidth: 1.8,
-          borderColor: color,
-          borderRadius: 10,
-          alignItems: 'center',
-          justifyContent: 'center',
+          color: tinta ?? c.brandInk,
+          fontFamily: fonts.bold,
+          fontSize: Math.round(size * 0.37),
+          letterSpacing: 0.3,
         }}
       >
-        <View
-          style={{ width: 6, height: 6, borderRadius: 3, borderWidth: 1.8, borderColor: color }}
-        />
-      </View>
-      {!open ? (
-        <View
-          style={{
-            position: 'absolute',
-            width: 24,
-            height: 1.8,
-            backgroundColor: color,
-            transform: [{ rotate: '-40deg' }],
-          }}
-        />
-      ) : null}
+        {initialsOf(name)}
+      </Text>
     </View>
   );
 }
 
+/// Compatibilidade: ícones de campo do login.
 export function PersonIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'flex-start' }}>
-      <View
-        style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 1.8, borderColor: color }}
-      />
-      <View
-        style={{
-          width: 16,
-          height: 9,
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
-          borderWidth: 1.8,
-          borderBottomWidth: 0,
-          borderColor: color,
-          marginTop: 2,
-        }}
-      />
-    </View>
-  );
+  return <Icon name="user" color={color} size={20} strokeWidth={1.7} />;
 }
 
 export function LockIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}>
-      <View
-        style={{
-          width: 11,
-          height: 8,
-          borderTopLeftRadius: 6,
-          borderTopRightRadius: 6,
-          borderWidth: 1.8,
-          borderBottomWidth: 0,
-          borderColor: color,
-          marginBottom: -1,
-        }}
-      />
-      <View
-        style={{
-          width: 16,
-          height: 11,
-          borderRadius: 3,
-          borderWidth: 1.8,
-          borderColor: color,
-        }}
-      />
-    </View>
-  );
+  return <Icon name="lock" color={color} size={20} strokeWidth={1.7} />;
 }
-

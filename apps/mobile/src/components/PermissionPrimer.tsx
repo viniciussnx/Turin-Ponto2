@@ -59,8 +59,9 @@ export function PermissionPrimer({
           accessibilityRole="header"
           style={{
             color: c.text,
-            fontFamily: fonts.display,
-            fontSize: 22,
+            fontFamily: fonts.bold,
+            fontSize: 20,
+            letterSpacing: -0.4,
             textAlign: 'center',
           }}
         >

@@ -103,15 +103,33 @@ export function useReminders() {
     });
   }, []);
 
-  return { reminders, toggle, setTime, ready };
+  /// Botão "Adicionar" da tela 14: novo lembrete ligado, dias úteis.
+  const add = useCallback((time = '08:00') => {
+    setReminders((current) => {
+      const next = [
+        ...current,
+        { id: `extra-${Date.now()}`, time, label: 'Lembrete', enabled: true, weekdays: [1, 2, 3, 4, 5] },
+      ];
+      void AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const remove = useCallback((id: string) => {
+    setReminders((current) => {
+      const next = current.filter((reminder) => reminder.id !== id);
+      void AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return { reminders, toggle, setTime, add, remove, ready };
 }
 
 export const WEEKDAY_NAMES = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
+/// "seg, ter, qua, qui, sex", como no protótipo.
 export function weekdaysLabel(weekdays: number[]): string {
   if (weekdays.length === 7) return 'todos os dias';
-  if (weekdays.length === 5 && weekdays.every((day) => day >= 1 && day <= 5)) {
-    return 'seg a sex';
-  }
   return weekdays.map((day) => WEEKDAY_NAMES[day]).join(', ');
 }
